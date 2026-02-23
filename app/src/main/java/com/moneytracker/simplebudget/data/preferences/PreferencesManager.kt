@@ -46,6 +46,10 @@ class PreferencesManager @Inject constructor(
         preferences[PreferencesKeys.CURRENCY_SYMBOL_AFTER] ?: true
     }
 
+    val onboardingCompleted: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.ONBOARDING_COMPLETED] ?: false
+    }
+
     suspend fun setDarkMode(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.DARK_MODE] = enabled
@@ -70,11 +74,18 @@ class PreferencesManager @Inject constructor(
         }
     }
 
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ONBOARDING_COMPLETED] = completed
+        }
+    }
+
     private object PreferencesKeys {
         val DARK_MODE = booleanPreferencesKey("dark_mode")
         val CURRENCY = stringPreferencesKey("currency")
         val IS_PREMIUM = booleanPreferencesKey("is_premium")
         val CURRENCY_SYMBOL_AFTER = booleanPreferencesKey("currency_symbol_after")
+        val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     }
 }
 
