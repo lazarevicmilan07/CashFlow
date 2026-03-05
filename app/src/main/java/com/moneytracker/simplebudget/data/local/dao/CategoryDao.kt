@@ -12,13 +12,13 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CategoryDao {
 
-    @Query("SELECT * FROM categories ORDER BY isDefault DESC, name ASC")
+    @Query("SELECT * FROM categories ORDER BY displayOrder ASC, name ASC")
     fun getAllCategories(): Flow<List<CategoryEntity>>
 
-    @Query("SELECT * FROM categories WHERE parentCategoryId IS NULL ORDER BY isDefault DESC, name ASC")
+    @Query("SELECT * FROM categories WHERE parentCategoryId IS NULL ORDER BY displayOrder ASC, name ASC")
     fun getRootCategories(): Flow<List<CategoryEntity>>
 
-    @Query("SELECT * FROM categories WHERE parentCategoryId = :parentId ORDER BY name ASC")
+    @Query("SELECT * FROM categories WHERE parentCategoryId = :parentId ORDER BY displayOrder ASC, name ASC")
     fun getSubcategories(parentId: Long): Flow<List<CategoryEntity>>
 
     @Query("SELECT EXISTS(SELECT 1 FROM categories WHERE parentCategoryId = :categoryId LIMIT 1)")
@@ -42,6 +42,9 @@ interface CategoryDao {
     @Update
     suspend fun updateCategory(category: CategoryEntity)
 
+    @Update
+    suspend fun updateCategories(categories: List<CategoryEntity>)
+
     @Delete
     suspend fun deleteCategory(category: CategoryEntity)
 
@@ -51,9 +54,15 @@ interface CategoryDao {
     @Query("DELETE FROM categories")
     suspend fun deleteAllCategories()
 
-    @Query("SELECT * FROM categories ORDER BY isDefault DESC, name ASC")
+    @Query("SELECT * FROM categories ORDER BY displayOrder ASC, name ASC")
     suspend fun getAllCategoriesSync(): List<CategoryEntity>
 
     @Query("SELECT EXISTS(SELECT 1 FROM categories LIMIT 1)")
     suspend fun hasCategories(): Boolean
+
+    @Query("SELECT COALESCE(MAX(displayOrder), -1) + 1 FROM categories WHERE parentCategoryId IS NULL")
+    suspend fun getNextRootDisplayOrder(): Int
+
+    @Query("SELECT COALESCE(MAX(displayOrder), -1) + 1 FROM categories WHERE parentCategoryId = :parentId")
+    suspend fun getNextSubcategoryDisplayOrder(parentId: Long): Int
 }

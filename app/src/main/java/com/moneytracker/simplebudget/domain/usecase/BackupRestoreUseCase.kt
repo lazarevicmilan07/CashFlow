@@ -174,7 +174,8 @@ data class BackupCategory(
     val color: Long,
     val isDefault: Boolean,
     val parentCategoryId: Long? = null,
-    val createdAt: Long
+    val createdAt: Long,
+    val displayOrder: Int = 0
 )
 
 @Serializable
@@ -220,7 +221,8 @@ private fun Category.toBackupCategory() = BackupCategory(
     color = color.value.toLong(),
     isDefault = isDefault,
     parentCategoryId = parentCategoryId,
-    createdAt = createdAt
+    createdAt = createdAt,
+    displayOrder = displayOrder
 )
 
 private fun BackupCategory.toCategory() = Category(
@@ -230,7 +232,8 @@ private fun BackupCategory.toCategory() = Category(
     color = Color(color.toULong()),
     isDefault = isDefault,
     parentCategoryId = parentCategoryId,
-    createdAt = createdAt
+    createdAt = createdAt,
+    displayOrder = displayOrder
 )
 
 private fun Account.toBackupAccount() = BackupAccount(

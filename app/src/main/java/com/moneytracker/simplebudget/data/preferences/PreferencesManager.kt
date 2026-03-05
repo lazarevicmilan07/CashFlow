@@ -25,7 +25,8 @@ class PreferencesManager @Inject constructor(
         UserPreferences(
             isDarkMode = preferences[PreferencesKeys.DARK_MODE] ?: true,
             currency = preferences[PreferencesKeys.CURRENCY] ?: "USD",
-            isPremium = preferences[PreferencesKeys.IS_PREMIUM] ?: false
+            isPremium = preferences[PreferencesKeys.IS_PREMIUM] ?: false,
+            currencySymbolAfter = preferences[PreferencesKeys.CURRENCY_SYMBOL_AFTER] ?: true
         )
     }
 
@@ -41,6 +42,14 @@ class PreferencesManager @Inject constructor(
         preferences[PreferencesKeys.IS_PREMIUM] ?: false
     }
 
+    val currencySymbolAfter: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.CURRENCY_SYMBOL_AFTER] ?: true
+    }
+
+    val onboardingCompleted: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.ONBOARDING_COMPLETED] ?: false
+    }
+
     suspend fun setDarkMode(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.DARK_MODE] = enabled
@@ -53,9 +62,21 @@ class PreferencesManager @Inject constructor(
         }
     }
 
+    suspend fun setCurrencySymbolAfter(after: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.CURRENCY_SYMBOL_AFTER] = after
+        }
+    }
+
     suspend fun setPremium(isPremium: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_PREMIUM] = isPremium
+        }
+    }
+
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ONBOARDING_COMPLETED] = completed
         }
     }
 
@@ -63,11 +84,14 @@ class PreferencesManager @Inject constructor(
         val DARK_MODE = booleanPreferencesKey("dark_mode")
         val CURRENCY = stringPreferencesKey("currency")
         val IS_PREMIUM = booleanPreferencesKey("is_premium")
+        val CURRENCY_SYMBOL_AFTER = booleanPreferencesKey("currency_symbol_after")
+        val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     }
 }
 
 data class UserPreferences(
     val isDarkMode: Boolean = true,
     val currency: String = "USD",
-    val isPremium: Boolean = false
+    val isPremium: Boolean = false,
+    val currencySymbolAfter: Boolean = true
 )

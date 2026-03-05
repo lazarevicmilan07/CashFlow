@@ -7,6 +7,7 @@ import com.moneytracker.simplebudget.data.repository.AccountRepository
 import com.moneytracker.simplebudget.data.repository.CategoryRepository
 import com.moneytracker.simplebudget.data.repository.ExpenseRepository
 import com.moneytracker.simplebudget.domain.model.Expense
+import com.moneytracker.simplebudget.ui.components.formatCurrency
 import com.itextpdf.kernel.colors.ColorConstants
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfWriter
@@ -130,6 +131,8 @@ class ExportUseCase @Inject constructor(
             val categories = categoryRepository.getAllCategories().first()
             val accounts = accountRepository.getAllAccounts().first()
 
+            val currency = preferencesManager.currency.first()
+            val symbolAfter = preferencesManager.currencySymbolAfter.first()
             val categoriesMap = categories.associateBy { it.id }
             val accountsMap = accounts.associateBy { it.id }
 
@@ -164,13 +167,13 @@ class ExportUseCase @Inject constructor(
                         .sumOf { it.amount }
 
                 document.add(
-                    Paragraph("Total Income: $${String.format("%.2f", totalIncome)}").setFontSize(12f)
+                    Paragraph("Total Income: ${formatCurrency(totalIncome, currency, symbolAfter)}").setFontSize(12f)
                 )
                 document.add(
-                    Paragraph("Total Expenses: $${String.format("%.2f", totalExpense)}").setFontSize(12f)
+                    Paragraph("Total Expenses: ${formatCurrency(totalExpense, currency, symbolAfter)}").setFontSize(12f)
                 )
                 document.add(
-                    Paragraph("Balance: $${String.format("%.2f", totalIncome - totalExpense)}")
+                    Paragraph("Balance: ${formatCurrency(totalIncome - totalExpense, currency, symbolAfter)}")
                         .setFontSize(12f).setMarginBottom(20f)
                 )
 
@@ -199,7 +202,7 @@ class ExportUseCase @Inject constructor(
                     table.addCell(categoryName)
                     table.addCell(subcategoryName)
                     table.addCell(accountName)
-                    table.addCell("$${String.format("%.2f", expense.amount)}")
+                    table.addCell(formatCurrency(expense.amount, currency, symbolAfter))
                     table.addCell(expense.note)
                 }
 

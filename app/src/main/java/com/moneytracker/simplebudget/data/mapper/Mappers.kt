@@ -20,7 +20,8 @@ fun CategoryEntity.toDomain(): Category = Category(
     color = Color(color.toULong()),
     isDefault = isDefault,
     parentCategoryId = parentCategoryId,
-    createdAt = createdAt
+    createdAt = createdAt,
+    displayOrder = displayOrder
 )
 
 fun Category.toEntity(): CategoryEntity = CategoryEntity(
@@ -30,7 +31,8 @@ fun Category.toEntity(): CategoryEntity = CategoryEntity(
     color = color.value.toLong(),
     isDefault = isDefault,
     parentCategoryId = parentCategoryId,
-    createdAt = createdAt
+    createdAt = createdAt,
+    displayOrder = displayOrder
 )
 
 fun ExpenseEntity.toDomain(): Expense = Expense(

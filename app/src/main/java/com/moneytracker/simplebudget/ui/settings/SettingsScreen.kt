@@ -243,6 +243,18 @@ fun SettingsScreen(
                     )
                 }
 
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.AttachMoney,
+                        title = "Currency Sign Position",
+                        subtitle = run {
+                            val sign = com.moneytracker.simplebudget.ui.components.getCurrencySymbol(userPreferences.currency)
+                            if (userPreferences.currencySymbolAfter) "After amount (100$sign)" else "Before amount (${sign}100)"
+                        },
+                        onClick = { viewModel.setCurrencySymbolAfter(!userPreferences.currencySymbolAfter) }
+                    )
+                }
+
                 // Data Section
                 item {
                     SettingsSectionHeader("Data")
@@ -455,7 +467,7 @@ fun SettingsScreen(
                         modifier = Modifier.clickable {
                             val intent = android.content.Intent(
                                 android.content.Intent.ACTION_VIEW,
-                                android.net.Uri.parse("https://lazarevicmilan07.github.io/privacy-policy.html")
+                                android.net.Uri.parse("https://lazarevicmilan07.github.io/money-tracker/privacy-policy.html")
                             )
                             context.startActivity(intent)
                         }

@@ -55,6 +55,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,7 +80,9 @@ import com.moneytracker.simplebudget.BuildConfig
 import com.moneytracker.simplebudget.data.preferences.PreferencesManager
 import com.moneytracker.simplebudget.navigation.NavGraph
 import com.moneytracker.simplebudget.navigation.Screen
+import com.moneytracker.simplebudget.ui.onboarding.OnboardingScreen
 import com.moneytracker.simplebudget.ui.theme.MoneyTrackerTheme
+import kotlinx.coroutines.launch
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -190,186 +193,206 @@ class MainActivity : ComponentActivity() {
         setContent {
             val isDarkMode by preferencesManager.isDarkMode.collectAsState(initial = true)
             val isPremium by preferencesManager.isPremium.collectAsState(initial = false)
+            val onboardingCompleted by preferencesManager.onboardingCompleted.collectAsState(initial = true)
+            var showOnboarding by remember { mutableStateOf(false) }
+            val coroutineScope = rememberCoroutineScope()
+
+            // Only show onboarding once the preference is loaded and it hasn't been completed
+            // Initial value is true to avoid flash; once the real value loads, we update
+            if (!onboardingCompleted && !showOnboarding) {
+                showOnboarding = true
+            }
 
             MoneyTrackerTheme(darkTheme = isDarkMode) {
-                val navController = rememberNavController()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
+                if (showOnboarding) {
+                    OnboardingScreen(
+                        onFinish = {
+                            coroutineScope.launch {
+                                preferencesManager.setOnboardingCompleted(true)
+                            }
+                            showOnboarding = false
+                        }
+                    )
+                } else {
+                    val navController = rememberNavController()
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentDestination = navBackStackEntry?.destination
 
-                val bottomNavItems = listOf(
-                    BottomNavItem.Records,
-                    BottomNavItem.Stats,
-                    BottomNavItem.Accounts,
-                    BottomNavItem.Categories,
-                    BottomNavItem.Settings
-                )
+                    val bottomNavItems = listOf(
+                        BottomNavItem.Records,
+                        BottomNavItem.Stats,
+                        BottomNavItem.Accounts,
+                        BottomNavItem.Categories,
+                        BottomNavItem.Settings
+                    )
 
-                // Main nav destinations where bottom nav should be visible
-                val mainNavRoutes = listOf(
-                    Screen.Dashboard.route,
-                    Screen.MonthlyReports.route,
-                    Screen.YearlyReports.route,
-                    Screen.Accounts.route,
-                    Screen.Categories.route,
-                    Screen.Settings.route
-                )
+                    // Main nav destinations where bottom nav should be visible
+                    val mainNavRoutes = listOf(
+                        Screen.Dashboard.route,
+                        Screen.MonthlyReports.route,
+                        Screen.YearlyReports.route,
+                        Screen.Accounts.route,
+                        Screen.Categories.route,
+                        Screen.Settings.route
+                    )
 
-                val showBottomNav = currentDestination?.route in mainNavRoutes
+                    val showBottomNav = currentDestination?.route in mainNavRoutes
 
-                // Track stats submenu visibility
-                var showStatsSubmenu by remember { mutableStateOf(false) }
+                    // Track stats submenu visibility
+                    var showStatsSubmenu by remember { mutableStateOf(false) }
 
-                // Determine which nav item is selected
-                val currentRoute = currentDestination?.route
-                val isStatsSelected = currentRoute in listOf(
-                    Screen.MonthlyReports.route,
-                    Screen.YearlyReports.route
-                )
+                    // Determine which nav item is selected
+                    val currentRoute = currentDestination?.route
+                    val isStatsSelected = currentRoute in listOf(
+                        Screen.MonthlyReports.route,
+                        Screen.YearlyReports.route
+                    )
 
-                // Routes where the ad banner should be visible
-                val adRoutes = listOf(
-                    Screen.Accounts.route,
-                    Screen.Categories.route,
-                    Screen.Settings.route
-                )
-                // TODO: Restore for release
-                // val showAd = !isPremium && currentRoute in adRoutes
-                val showAd = false
+                    // Routes where the ad banner should be visible
+                    val adRoutes = listOf(
+                        Screen.Accounts.route,
+                        Screen.Categories.route,
+                        Screen.Settings.route
+                    )
+                    // TODO: Restore for release
+                    // val showAd = !isPremium && currentRoute in adRoutes
+                    val showAd = false
 
-                // Create a single AdView instance that lives for the composable's lifetime
-                val configuration = LocalConfiguration.current
-                val screenWidthDp = configuration.screenWidthDp
-                val adView = remember {
-                    AdView(this@MainActivity).apply {
-                        setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this@MainActivity, screenWidthDp))
-                        adUnitId = BuildConfig.ADMOB_BANNER_ID
-                        loadAd(AdRequest.Builder().build())
-                    }
-                }
-
-                // Manage AdView lifecycle
-                val lifecycleOwner = LocalLifecycleOwner.current
-                DisposableEffect(lifecycleOwner) {
-                    val observer = LifecycleEventObserver { _, event ->
-                        when (event) {
-                            Lifecycle.Event.ON_PAUSE -> adView.pause()
-                            Lifecycle.Event.ON_RESUME -> adView.resume()
-                            else -> {}
+                    // Create a single AdView instance that lives for the composable's lifetime
+                    val configuration = LocalConfiguration.current
+                    val screenWidthDp = configuration.screenWidthDp
+                    val adView = remember {
+                        AdView(this@MainActivity).apply {
+                            setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this@MainActivity, screenWidthDp))
+                            adUnitId = BuildConfig.ADMOB_BANNER_ID
+                            loadAd(AdRequest.Builder().build())
                         }
                     }
-                    lifecycleOwner.lifecycle.addObserver(observer)
-                    onDispose {
-                        lifecycleOwner.lifecycle.removeObserver(observer)
-                        adView.destroy()
-                    }
-                }
 
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        bottomBar = {
-                            if (showBottomNav) {
-                                Column(modifier = Modifier.navigationBarsPadding()) {
-                                    CustomNavigationBar(
-                                        items = bottomNavItems,
-                                        currentRoute = currentRoute,
-                                        isStatsSelected = isStatsSelected,
-                                        isDarkMode = isDarkMode,
-                                        onItemClick = { item ->
-                                            if (item.hasSubmenu) {
-                                                showStatsSubmenu = !showStatsSubmenu
-                                            } else {
-                                                showStatsSubmenu = false
-                                                if (currentRoute != item.route) {
-                                                    navController.navigate(item.route) {
-                                                        popUpTo(navController.graph.findStartDestination().id) {
-                                                            saveState = false
+                    // Manage AdView lifecycle
+                    val lifecycleOwner = LocalLifecycleOwner.current
+                    DisposableEffect(lifecycleOwner) {
+                        val observer = LifecycleEventObserver { _, event ->
+                            when (event) {
+                                Lifecycle.Event.ON_PAUSE -> adView.pause()
+                                Lifecycle.Event.ON_RESUME -> adView.resume()
+                                else -> {}
+                            }
+                        }
+                        lifecycleOwner.lifecycle.addObserver(observer)
+                        onDispose {
+                            lifecycleOwner.lifecycle.removeObserver(observer)
+                            adView.destroy()
+                        }
+                    }
+
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Scaffold(
+                            modifier = Modifier.fillMaxSize(),
+                            bottomBar = {
+                                if (showBottomNav) {
+                                    Column(modifier = Modifier.navigationBarsPadding()) {
+                                        CustomNavigationBar(
+                                            items = bottomNavItems,
+                                            currentRoute = currentRoute,
+                                            isStatsSelected = isStatsSelected,
+                                            isDarkMode = isDarkMode,
+                                            onItemClick = { item ->
+                                                if (item.hasSubmenu) {
+                                                    showStatsSubmenu = !showStatsSubmenu
+                                                } else {
+                                                    showStatsSubmenu = false
+                                                    if (currentRoute != item.route) {
+                                                        navController.navigate(item.route) {
+                                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                                saveState = false
+                                                            }
+                                                            launchSingleTop = true
+                                                            restoreState = false
                                                         }
-                                                        launchSingleTop = true
-                                                        restoreState = false
                                                     }
                                                 }
                                             }
-                                        }
-                                    )
+                                        )
+                                    }
                                 }
                             }
+                        ) { _ ->
+                            NavGraph(
+                                navController = navController,
+                                modifier = Modifier.fillMaxSize()
+                            )
                         }
-                    ) { _ ->
-                        NavGraph(
-                            navController = navController,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
 
-                    // Shared ad banner overlay — one AdView instance, visibility toggled per route
-                    AndroidView(
-                        factory = { adView },
-                        update = { view ->
-                            view.visibility = if (showAd) View.VISIBLE else View.GONE
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .navigationBarsPadding()
-                            .padding(bottom = 56.dp)
-                            .fillMaxWidth()
-                    )
-
-                    // Dismiss overlay when stats submenu is open (captures taps outside submenu)
-                    // Excludes the nav bar area so nav bar remains clickable
-                    if (showStatsSubmenu) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .navigationBarsPadding()
-                                .padding(bottom = 56.dp) // Nav bar height
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) { showStatsSubmenu = false }
-                        )
-                    }
-
-                    // Stats submenu popup - positioned above nav bar (on top of overlay)
-                    if (showBottomNav) {
-                        AnimatedVisibility(
-                            visible = showStatsSubmenu,
-                            enter = fadeIn() + slideInVertically { it },
-                            exit = fadeOut() + slideOutVertically { it },
+                        // Shared ad banner overlay — one AdView instance, visibility toggled per route
+                        AndroidView(
+                            factory = { adView },
+                            update = { view ->
+                                view.visibility = if (showAd) View.VISIBLE else View.GONE
+                            },
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .navigationBarsPadding()
-                                .offset(x = (-60).dp, y = (-70).dp)
-                        ) {
-                            StatsSubmenu(
-                                isDarkMode = isDarkMode,
-                                currentRoute = currentRoute,
-                                onMonthlyClick = {
-                                    showStatsSubmenu = false
-                                    if (currentRoute != Screen.MonthlyReports.route) {
-                                        navController.navigate(Screen.MonthlyReports.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = false
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = false
-                                        }
-                                    }
-                                },
-                                onYearlyClick = {
-                                    showStatsSubmenu = false
-                                    if (currentRoute != Screen.YearlyReports.route) {
-                                        navController.navigate(Screen.YearlyReports.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = false
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = false
-                                        }
-                                    }
-                                },
-                                onDismiss = { showStatsSubmenu = false }
+                                .padding(bottom = 56.dp)
+                                .fillMaxWidth()
+                        )
+
+                        // Dismiss overlay when stats submenu is open (captures taps outside submenu)
+                        // Excludes the nav bar area so nav bar remains clickable
+                        if (showStatsSubmenu) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .navigationBarsPadding()
+                                    .padding(bottom = 56.dp) // Nav bar height
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) { showStatsSubmenu = false }
                             )
+                        }
+
+                        // Stats submenu popup - positioned above nav bar (on top of overlay)
+                        if (showBottomNav) {
+                            AnimatedVisibility(
+                                visible = showStatsSubmenu,
+                                enter = fadeIn() + slideInVertically { it },
+                                exit = fadeOut() + slideOutVertically { it },
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .navigationBarsPadding()
+                                    .offset(x = (-60).dp, y = (-70).dp)
+                            ) {
+                                StatsSubmenu(
+                                    isDarkMode = isDarkMode,
+                                    currentRoute = currentRoute,
+                                    onMonthlyClick = {
+                                        showStatsSubmenu = false
+                                        if (currentRoute != Screen.MonthlyReports.route) {
+                                            navController.navigate(Screen.MonthlyReports.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = false
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = false
+                                            }
+                                        }
+                                    },
+                                    onYearlyClick = {
+                                        showStatsSubmenu = false
+                                        if (currentRoute != Screen.YearlyReports.route) {
+                                            navController.navigate(Screen.YearlyReports.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = false
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = false
+                                            }
+                                        }
+                                    },
+                                    onDismiss = { showStatsSubmenu = false }
+                                )
+                            }
                         }
                     }
                 }

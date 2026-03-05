@@ -114,6 +114,7 @@ fun TransactionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currency by viewModel.currency.collectAsState()
+    val symbolAfter by viewModel.currencySymbolAfter.collectAsState()
     val rootCategories by viewModel.rootCategories.collectAsState()
     val availableSubcategories by viewModel.availableSubcategories.collectAsState()
     val allCategories by viewModel.categories.collectAsState()
@@ -238,7 +239,8 @@ fun TransactionScreen(
                     currency = currency,
                     typeColor = typeColor,
                     isActive = uiState.currentField == TransactionField.AMOUNT,
-                    onClick = { viewModel.setCurrentField(TransactionField.AMOUNT) }
+                    onClick = { viewModel.setCurrentField(TransactionField.AMOUNT) },
+                    symbolAfter = symbolAfter
                 )
 
                 // Form fields card
@@ -362,8 +364,22 @@ private fun HeroAmountDisplay(
     currency: String,
     typeColor: Color,
     isActive: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    symbolAfter: Boolean = true
 ) {
+    val symbolText = getCurrencySymbol(currency)
+    val symbolColor = if (amount.isNotEmpty()) typeColor else typeColor.copy(alpha = 0.35f)
+    val symbolComposable: @Composable () -> Unit = {
+        Text(
+            text = symbolText,
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontWeight = FontWeight.Medium
+            ),
+            color = symbolColor,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -376,15 +392,10 @@ private fun HeroAmountDisplay(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(verticalAlignment = Alignment.Top) {
-            Text(
-                text = getCurrencySymbol(currency),
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Medium
-                ),
-                color = if (amount.isNotEmpty()) typeColor else typeColor.copy(alpha = 0.35f),
-                modifier = Modifier.padding(top = 4.dp)
-            )
-            Spacer(modifier = Modifier.width(2.dp))
+            if (!symbolAfter) {
+                symbolComposable()
+                Spacer(modifier = Modifier.width(2.dp))
+            }
             val displayAmount = when {
                 amount.isEmpty() -> "0"
                 isActive -> formatAmountInput(amount)
@@ -401,6 +412,10 @@ private fun HeroAmountDisplay(
                 ),
                 color = if (amount.isNotEmpty()) typeColor else typeColor.copy(alpha = 0.2f)
             )
+            if (symbolAfter) {
+                Spacer(modifier = Modifier.width(2.dp))
+                symbolComposable()
+            }
         }
         Spacer(modifier = Modifier.height(4.dp))
         Box(

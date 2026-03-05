@@ -67,6 +67,7 @@ import com.moneytracker.simplebudget.ui.theme.IncomeGreen
 @Composable
 fun MonthlyReportsScreen(
     currency: String,
+    symbolAfter: Boolean = true,
     viewModel: MonthlyReportsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -166,7 +167,8 @@ fun MonthlyReportsScreen(
                 balance = uiState.balance,
                 currency = currency,
                 collapseProgress = collapseProgress,
-                modifier = Modifier.offset { IntOffset(dragOffset.value.roundToInt(), 0) }
+                modifier = Modifier.offset { IntOffset(dragOffset.value.roundToInt(), 0) },
+                symbolAfter = symbolAfter
             )
 
             LazyColumn(
@@ -218,7 +220,8 @@ fun MonthlyReportsScreen(
                                 title = "Expenses by Category",
                                 breakdown = uiState.expenseBreakdown,
                                 currency = currency,
-                                color = ExpenseRed
+                                color = ExpenseRed,
+                                symbolAfter = symbolAfter
                             )
                         }
 
@@ -228,7 +231,8 @@ fun MonthlyReportsScreen(
                                 title = "Income by Category",
                                 breakdown = uiState.incomeBreakdown,
                                 currency = currency,
-                                color = IncomeGreen
+                                color = IncomeGreen,
+                                symbolAfter = symbolAfter
                             )
                         }
 
@@ -248,7 +252,8 @@ fun BreakdownCard(
     title: String,
     breakdown: List<CategoryBreakdown>,
     currency: String,
-    color: Color
+    color: Color,
+    symbolAfter: Boolean = true
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -265,6 +270,7 @@ fun BreakdownCard(
                 breakdown = breakdown,
                 currency = currency,
                 accentColor = color,
+                symbolAfter = symbolAfter,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
@@ -303,7 +309,8 @@ fun BreakdownCard(
                         amount = item.amount,
                         currencyCode = currency,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        symbolAfter = symbolAfter
                     )
                 }
             }
@@ -316,6 +323,7 @@ fun PieChart(
     breakdown: List<CategoryBreakdown>,
     currency: String,
     accentColor: Color = Color.Unspecified,
+    symbolAfter: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val total = breakdown.sumOf { it.amount }.toFloat()
@@ -404,7 +412,8 @@ fun PieChart(
                     currencyCode = currency,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = tooltipColor
+                    color = tooltipColor,
+                    symbolAfter = symbolAfter
                 )
                 Text(
                     text = " (${item.percentage.toInt()}%)",

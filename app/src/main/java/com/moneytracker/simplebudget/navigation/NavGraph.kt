@@ -170,12 +170,14 @@ fun NavGraph(
             val expenseId = backStackEntry.arguments?.getLong("expenseId") ?: -1L
             val dashboardViewModel: DashboardViewModel = hiltViewModel()
             val currency by dashboardViewModel.currency.collectAsState()
+            val symbolAfter by dashboardViewModel.currencySymbolAfter.collectAsState()
             TransactionDetailScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onEditTransaction = {
                     navController.navigate(Screen.EditTransaction.createRoute(expenseId))
                 },
-                currency = currency
+                currency = currency,
+                symbolAfter = symbolAfter
             )
         }
 
@@ -188,17 +190,21 @@ fun NavGraph(
         composable(Screen.Accounts.route) {
             val dashboardViewModel: DashboardViewModel = hiltViewModel()
             val currency by dashboardViewModel.currency.collectAsState()
+            val symbolAfter by dashboardViewModel.currencySymbolAfter.collectAsState()
             AccountsScreen(
-                currency = currency
+                currency = currency,
+                symbolAfter = symbolAfter
             )
         }
 
         composable(Screen.AccountsFromTransaction.route) {
             val dashboardViewModel: DashboardViewModel = hiltViewModel()
             val currency by dashboardViewModel.currency.collectAsState()
+            val symbolAfter by dashboardViewModel.currencySymbolAfter.collectAsState()
             AccountsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                currency = currency
+                currency = currency,
+                symbolAfter = symbolAfter
             )
         }
 
@@ -224,13 +230,15 @@ fun NavGraph(
         composable(Screen.MonthlyReports.route) {
             val dashboardViewModel: DashboardViewModel = hiltViewModel()
             val currency by dashboardViewModel.currency.collectAsState()
-            MonthlyReportsScreen(currency = currency)
+            val symbolAfter by dashboardViewModel.currencySymbolAfter.collectAsState()
+            MonthlyReportsScreen(currency = currency, symbolAfter = symbolAfter)
         }
 
         composable(Screen.YearlyReports.route) {
             val dashboardViewModel: DashboardViewModel = hiltViewModel()
             val currency by dashboardViewModel.currency.collectAsState()
-            YearlyReportsScreen(currency = currency)
+            val symbolAfter by dashboardViewModel.currencySymbolAfter.collectAsState()
+            YearlyReportsScreen(currency = currency, symbolAfter = symbolAfter)
         }
     }
 }

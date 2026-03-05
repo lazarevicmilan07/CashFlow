@@ -48,6 +48,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setCurrencySymbolAfter(after: Boolean) {
+        viewModelScope.launch {
+            preferencesManager.setCurrencySymbolAfter(after)
+        }
+    }
+
     fun showCurrencyPicker() {
         _uiState.value = _uiState.value.copy(showCurrencyPicker = true)
     }

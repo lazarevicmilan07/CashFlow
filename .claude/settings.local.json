@@ -44,7 +44,14 @@
       "Bash(git remote set-url:*)",
       "Bash(del \"C:\\\\ComData\\\\Projekti\\\\MoneyTracker\\\\replace_package.ps1\")",
       "Bash(rename \"C:\\\\ComData\\\\Projekti\\\\MoneyTracker\\\\app\\\\src\\\\main\\\\java\\\\com\\\\expensetracker\" moneytracker)",
-      "Bash(./gradlew clean:*)"
+      "Bash(./gradlew clean:*)",
+      "Bash(magick:*)",
+      "Bash(convert:*)",
+      "Bash(git checkout:*)",
+      "Bash(git push:*)",
+      "Bash(set:*)",
+      "Bash(export JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\")",
+      "Bash(JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\" ./gradlew:*)"
     ]
   }
 }

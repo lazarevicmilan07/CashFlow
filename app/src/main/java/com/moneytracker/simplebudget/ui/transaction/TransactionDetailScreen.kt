@@ -63,6 +63,7 @@ fun TransactionDetailScreen(
     onNavigateBack: () -> Unit,
     onEditTransaction: () -> Unit,
     currency: String,
+    symbolAfter: Boolean = true,
     viewModel: TransactionDetailViewModel = hiltViewModel()
 ) {
     val transaction by viewModel.transaction.collectAsState()
@@ -111,6 +112,7 @@ fun TransactionDetailScreen(
             TransactionDetailContent(
                 transaction = txn,
                 currency = currency,
+                symbolAfter = symbolAfter,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
@@ -139,7 +141,7 @@ fun TransactionDetailScreen(
                     Text(
                         "Are you sure you want to delete this ${
                             if (txn.expense.type == TransactionType.EXPENSE) "expense" else "income"
-                        } of ${formatCurrency(txn.expense.amount, currency)}?"
+                        } of ${formatCurrency(txn.expense.amount, currency, symbolAfter)}?"
                     )
                 },
                 confirmButton = {
@@ -169,6 +171,7 @@ fun TransactionDetailScreen(
 fun TransactionDetailContent(
     transaction: ExpenseWithCategory,
     currency: String,
+    symbolAfter: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val isExpense = transaction.expense.type == TransactionType.EXPENSE
@@ -209,9 +212,9 @@ fun TransactionDetailContent(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = when {
-                        isTransfer -> formatCurrency(transaction.expense.amount, currency)
-                        isExpense -> "-${formatCurrency(transaction.expense.amount, currency)}"
-                        else -> "+${formatCurrency(transaction.expense.amount, currency)}"
+                        isTransfer -> formatCurrency(transaction.expense.amount, currency, symbolAfter)
+                        isExpense -> "-${formatCurrency(transaction.expense.amount, currency, symbolAfter)}"
+                        else -> "+${formatCurrency(transaction.expense.amount, currency, symbolAfter)}"
                     },
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,

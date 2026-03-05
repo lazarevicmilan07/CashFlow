@@ -40,11 +40,25 @@ class CategoryRepository @Inject constructor(
     suspend fun getCategoryCount(): Int =
         categoryDao.getCategoryCount()
 
-    suspend fun insertCategory(category: Category): Long =
-        categoryDao.insertCategory(category.toEntity())
+    suspend fun insertCategory(category: Category): Long {
+        val withOrder = if (category.displayOrder == 0 && category.id == 0L) {
+            val nextOrder = if (category.parentCategoryId != null) {
+                categoryDao.getNextSubcategoryDisplayOrder(category.parentCategoryId)
+            } else {
+                categoryDao.getNextRootDisplayOrder()
+            }
+            category.copy(displayOrder = nextOrder)
+        } else {
+            category
+        }
+        return categoryDao.insertCategory(withOrder.toEntity())
+    }
 
     suspend fun updateCategory(category: Category) =
         categoryDao.updateCategory(category.toEntity())
+
+    suspend fun updateCategoryOrders(categories: List<Category>) =
+        categoryDao.updateCategories(categories.map { it.toEntity() })
 
     suspend fun deleteCategory(category: Category) =
         categoryDao.deleteCategory(category.toEntity())
@@ -54,19 +68,24 @@ class CategoryRepository @Inject constructor(
 
     suspend fun initializeDefaultCategories() {
         if (!categoryDao.hasCategories()) {
-            categoryDao.insertCategories(DefaultCategories.map { it.toEntity() })
+            categoryDao.insertCategories(
+                DefaultCategories.mapIndexed { index, cat ->
+                    cat.copy(displayOrder = index).toEntity()
+                }
+            )
 
             // Seed default subcategories for each parent category
             for (defaultCategory in DefaultCategories) {
                 val subcategoryDefs = DefaultSubcategories[defaultCategory.name] ?: continue
                 val parentEntity = categoryDao.getCategoryByName(defaultCategory.name) ?: continue
-                val subcategories = subcategoryDefs.map { (name, icon, color) ->
+                val subcategories = subcategoryDefs.mapIndexed { index, (name, icon, color) ->
                     Category(
                         name = name,
                         icon = icon,
                         color = color,
                         isDefault = true,
-                        parentCategoryId = parentEntity.id
+                        parentCategoryId = parentEntity.id,
+                        displayOrder = index
                     ).toEntity()
                 }
                 categoryDao.insertCategories(subcategories)

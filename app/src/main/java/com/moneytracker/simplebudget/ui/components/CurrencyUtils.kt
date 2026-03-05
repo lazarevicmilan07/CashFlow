@@ -29,15 +29,17 @@ private fun getAppDecimalSymbols(): DecimalFormatSymbols {
  * Formats a currency amount with the currency symbol.
  * Always uses dot for thousands and comma for decimals (e.g. 150.000,00).
  */
-fun formatCurrency(amount: Double, currencyCode: String): String {
+fun formatCurrency(amount: Double, currencyCode: String, symbolAfter: Boolean = true): String {
     return try {
         val symbol = getCurrencySymbol(currencyCode)
         val symbols = getAppDecimalSymbols()
         val format = DecimalFormat("#,##0.00", symbols)
-        "$symbol${format.format(amount)}"
+        val formatted = format.format(amount)
+        if (symbolAfter) "$formatted $symbol" else "$symbol$formatted"
     } catch (e: Exception) {
         val symbol = getCurrencySymbol(currencyCode)
-        "$symbol${String.format("%.2f", amount)}"
+        val formatted = String.format("%.2f", amount)
+        if (symbolAfter) "$formatted $symbol" else "$symbol$formatted"
     }
 }
 
@@ -123,7 +125,8 @@ fun CurrencyAmountText(
     color: Color = Color.Unspecified,
     fontWeight: FontWeight? = null,
     maxLines: Int = Int.MAX_VALUE,
-    overflow: TextOverflow = TextOverflow.Clip
+    overflow: TextOverflow = TextOverflow.Clip,
+    symbolAfter: Boolean = true
 ) {
     val symbol = getCurrencySymbol(currencyCode)
     val formatted = formatNumber(amount, currencyCode)
@@ -134,13 +137,15 @@ fun CurrencyAmountText(
     )
 
     Row(modifier = modifier, verticalAlignment = Alignment.Top) {
-        Text(
-            text = symbol,
-            style = currencyStyle,
-            color = color,
-            modifier = Modifier.padding(top = 2.dp)
-        )
-        Spacer(modifier = Modifier.width(1.dp))
+        if (!symbolAfter) {
+            Text(
+                text = symbol,
+                style = currencyStyle,
+                color = color,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+            Spacer(modifier = Modifier.width(1.dp))
+        }
         Text(
             text = formatted,
             style = effectiveStyle,
@@ -148,5 +153,14 @@ fun CurrencyAmountText(
             maxLines = maxLines,
             overflow = overflow
         )
+        if (symbolAfter) {
+            Spacer(modifier = Modifier.width(1.dp))
+            Text(
+                text = symbol,
+                style = currencyStyle,
+                color = color,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        }
     }
 }

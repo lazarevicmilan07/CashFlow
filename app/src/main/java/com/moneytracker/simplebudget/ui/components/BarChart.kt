@@ -31,6 +31,7 @@ import java.util.Locale
 fun MonthlyBarChart(
     monthlyData: List<MonthData>,
     currency: String = "USD",
+    symbolAfter: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val maxValue = monthlyData.maxOfOrNull { maxOf(it.income, it.expense) } ?: 1.0
@@ -164,13 +165,15 @@ fun MonthlyBarChart(
                         amount = data.income,
                         currencyCode = currency,
                         style = MaterialTheme.typography.labelMedium,
-                        color = IncomeGreen
+                        color = IncomeGreen,
+                        symbolAfter = symbolAfter
                     )
                     CurrencyAmountText(
                         amount = data.expense,
                         currencyCode = currency,
                         style = MaterialTheme.typography.labelMedium,
-                        color = ExpenseRed
+                        color = ExpenseRed,
+                        symbolAfter = symbolAfter
                     )
                 }
             }

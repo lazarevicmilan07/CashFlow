@@ -65,7 +65,8 @@ fun CollapsibleSummaryCard(
     currency: String,
     collapseProgress: Float,
     balanceLabel: String = "Balance",
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    symbolAfter: Boolean = true
 ) {
     val p = collapseProgress
 
@@ -113,7 +114,8 @@ fun CollapsibleSummaryCard(
                 fontWeight = FontWeight.Bold,
                 color = balanceColor,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                symbolAfter = symbolAfter
             )
         }
 
@@ -166,7 +168,8 @@ fun CollapsibleSummaryCard(
                             fontWeight = FontWeight.SemiBold,
                             color = IncomeGreen,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            symbolAfter = symbolAfter
                         )
                     }
                 }
@@ -214,7 +217,8 @@ fun CollapsibleSummaryCard(
                             fontWeight = FontWeight.SemiBold,
                             color = ExpenseRed,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            symbolAfter = symbolAfter
                         )
                     }
                 }

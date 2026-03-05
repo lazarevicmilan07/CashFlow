@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.SubdirectoryArrowRight
 import androidx.compose.material3.AlertDialog
@@ -59,7 +61,19 @@ import com.moneytracker.simplebudget.domain.model.Category
 import com.moneytracker.simplebudget.ui.components.AvailableColors
 import com.moneytracker.simplebudget.ui.components.AvailableIcons
 import com.moneytracker.simplebudget.ui.components.CategoryIcon
+import com.moneytracker.simplebudget.ui.components.dragHandle
+import com.moneytracker.simplebudget.ui.components.draggableItem
 import com.moneytracker.simplebudget.ui.components.getIconForName
+import com.moneytracker.simplebudget.ui.components.rememberDragDropListState
+
+private fun groupKeyOf(key: Any): String {
+    val k = key as? String ?: return ""
+    return if (k.startsWith("root_")) "root"
+    else {
+        val parts = k.split("_")
+        if (parts.size >= 2) "${parts[0]}_${parts[1]}" else ""
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +88,60 @@ fun CategoriesScreen(
     val context = LocalContext.current
 
     var categoryToDelete by remember { mutableStateOf<Category?>(null) }
+
+    // Local mutable state for drag-in-progress ordering
+    var localRoots by remember { mutableStateOf(categoriesState.rootCategories) }
+    var localSubs by remember { mutableStateOf(categoriesState.subcategoriesMap) }
+
+    // Sync from DB when not dragging
+    val lazyListState = rememberLazyListState()
+    val dragDropState = rememberDragDropListState(lazyListState)
+
+    LaunchedEffect(categoriesState.rootCategories, categoriesState.subcategoriesMap) {
+        if (!dragDropState.isDragging) {
+            localRoots = categoriesState.rootCategories
+            localSubs = categoriesState.subcategoriesMap
+        }
+    }
+
+    dragDropState.groupKeyOf = ::groupKeyOf
+    dragDropState.onSwap = onSwap@{ draggedKey, targetKey ->
+        val dk = draggedKey as? String ?: return@onSwap
+        val tk = targetKey as? String ?: return@onSwap
+
+        if (dk.startsWith("root_") && tk.startsWith("root_")) {
+            val draggedId = dk.removePrefix("root_").toLong()
+            val targetId = tk.removePrefix("root_").toLong()
+            val list = localRoots.toMutableList()
+            val from = list.indexOfFirst { it.id == draggedId }
+            val to = list.indexOfFirst { it.id == targetId }
+            if (from >= 0 && to >= 0) {
+                list.add(to, list.removeAt(from))
+                localRoots = list
+            }
+        } else if (dk.startsWith("sub_") && tk.startsWith("sub_")) {
+            val dParts = dk.split("_")
+            val tParts = tk.split("_")
+            val parentId = dParts[1].toLong()
+            val draggedId = dParts[2].toLong()
+            val targetId = tParts[2].toLong()
+            val map = localSubs.toMutableMap()
+            val list = map[parentId]?.toMutableList() ?: return@onSwap
+            val from = list.indexOfFirst { it.id == draggedId }
+            val to = list.indexOfFirst { it.id == targetId }
+            if (from >= 0 && to >= 0) {
+                list.add(to, list.removeAt(from))
+                map[parentId] = list
+                localSubs = map
+            }
+        }
+    }
+    dragDropState.onDragEnd = {
+        viewModel.saveCategoryOrder(localRoots)
+        localSubs.forEach { (_, subcats) ->
+            viewModel.saveCategoryOrder(subcats)
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -120,40 +188,44 @@ fun CategoriesScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
+                state = lazyListState,
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = if (onNavigateBack != null) 64.dp else 120.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Display hierarchical categories
-                categoriesState.rootCategories.forEach { category ->
-                    val hasSubcategories = categoriesState.subcategoriesMap.containsKey(category.id)
+                localRoots.forEach { category ->
+                    val itemKey = "root_${category.id}"
+                    val hasSubcategories = localSubs.containsKey(category.id)
                     val isExpanded = category.id in expandedCategories
 
-                    item(key = category.id) {
+                    item(key = itemKey) {
                         CategoryListItem(
                             category = category,
                             hasSubcategories = hasSubcategories,
                             isExpanded = isExpanded,
                             onToggleExpand = { viewModel.toggleCategoryExpanded(category.id) },
                             onClick = { viewModel.showEditDialog(category) },
-                            onAddSubcategory = { viewModel.showAddDialog(parentCategoryId = category.id) }
+                            onAddSubcategory = { viewModel.showAddDialog(parentCategoryId = category.id) },
+                            dragHandleModifier = Modifier.dragHandle(dragDropState, itemKey),
+                            modifier = Modifier.draggableItem(dragDropState, itemKey)
                         )
                     }
 
-                    // Show subcategories when expanded
                     if (hasSubcategories && isExpanded) {
-                        val subcategories = categoriesState.subcategoriesMap[category.id] ?: emptyList()
+                        val subcategories = localSubs[category.id] ?: emptyList()
                         subcategories.forEach { subcategory ->
-                            item(key = subcategory.id) {
+                            val subKey = "sub_${category.id}_${subcategory.id}"
+                            item(key = subKey) {
                                 SubcategoryListItem(
                                     category = subcategory,
-                                    onClick = { viewModel.showEditDialog(subcategory) }
+                                    onClick = { viewModel.showEditDialog(subcategory) },
+                                    dragHandleModifier = Modifier.dragHandle(dragDropState, subKey),
+                                    modifier = Modifier.draggableItem(dragDropState, subKey)
                                 )
                             }
                         }
                     }
                 }
             }
-
         }
     }
 
@@ -214,10 +286,12 @@ fun CategoryListItem(
     isExpanded: Boolean = false,
     onToggleExpand: () -> Unit = {},
     onClick: () -> Unit,
-    onAddSubcategory: () -> Unit = {}
+    onAddSubcategory: () -> Unit = {},
+    dragHandleModifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
@@ -277,6 +351,14 @@ fun CategoryListItem(
                     modifier = Modifier.size(15.dp)
                 )
             }
+
+            // Drag handle
+            Icon(
+                Icons.Default.DragHandle,
+                contentDescription = "Drag to reorder",
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                modifier = dragHandleModifier.size(20.dp)
+            )
         }
     }
 }
@@ -284,10 +366,12 @@ fun CategoryListItem(
 @Composable
 fun SubcategoryListItem(
     category: Category,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    dragHandleModifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(start = 32.dp)
             .clickable(onClick = onClick),
@@ -323,6 +407,14 @@ fun SubcategoryListItem(
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
+            )
+
+            // Drag handle
+            Icon(
+                Icons.Default.DragHandle,
+                contentDescription = "Drag to reorder",
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                modifier = dragHandleModifier.size(20.dp)
             )
         }
     }

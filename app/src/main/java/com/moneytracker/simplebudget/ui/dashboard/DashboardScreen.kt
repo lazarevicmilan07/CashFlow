@@ -8,35 +8,51 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -63,6 +79,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.moneytracker.simplebudget.domain.model.Account
+import com.moneytracker.simplebudget.domain.model.Category
 import com.moneytracker.simplebudget.domain.model.TransactionType
 import com.moneytracker.simplebudget.domain.model.CategoryBreakdown
 import com.moneytracker.simplebudget.domain.model.ExpenseWithCategory
@@ -80,6 +98,7 @@ import com.moneytracker.simplebudget.ui.theme.IncomeGreen
 import com.moneytracker.simplebudget.ui.theme.TransferBlue
 import java.time.format.DateTimeFormatter
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
@@ -90,8 +109,12 @@ fun DashboardScreen(
     val uiState by viewModel.uiState.collectAsState()
     val selectedMonth by viewModel.selectedMonth.collectAsState()
     val currency by viewModel.currency.collectAsState()
+    val symbolAfter by viewModel.currencySymbolAfter.collectAsState()
     val isPremium by viewModel.isPremium.collectAsState()
+    val filter by viewModel.filter.collectAsState()
+    val filteredTransactions by viewModel.filteredTransactions.collectAsState()
     var showMonthPicker by remember { mutableStateOf(false) }
+    var showFilterSheet by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val dragOffset = remember { Animatable(0f) }
@@ -126,7 +149,27 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Transactions") }
+                title = { Text("Transactions") },
+                actions = {
+                    IconButton(onClick = { showFilterSheet = true }) {
+                        BadgedBox(
+                            badge = {
+                                val activeCount = listOfNotNull(
+                                    filter.transactionType,
+                                    filter.categoryId,
+                                    filter.subcategoryId,
+                                    filter.accountId,
+                                    filter.searchQuery.takeIf { it.isNotBlank() }
+                                ).size
+                                if (activeCount > 0) {
+                                    Badge { Text("$activeCount") }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.FilterList, contentDescription = "Filters")
+                        }
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -200,6 +243,21 @@ fun DashboardScreen(
                     )
                 }
 
+                if (showFilterSheet) {
+                    FilterBottomSheet(
+                        filter = filter,
+                        categories = uiState.categories,
+                        accounts = uiState.accounts,
+                        onTypeFilter = viewModel::setTransactionTypeFilter,
+                        onCategoryFilter = viewModel::setCategoryFilter,
+                        onSubcategoryFilter = viewModel::setSubcategoryFilter,
+                        onAccountFilter = viewModel::setAccountFilter,
+                        onSearchQuery = viewModel::setSearchQuery,
+                        onClearFilters = viewModel::clearFilters,
+                        onDismiss = { showFilterSheet = false }
+                    )
+                }
+
                 // Pinned collapsible hero — swipes with content
                 CollapsibleSummaryCard(
                     income = uiState.monthlyStats.totalIncome,
@@ -207,7 +265,8 @@ fun DashboardScreen(
                     balance = uiState.monthlyStats.balance,
                     currency = currency,
                     collapseProgress = collapseProgress,
-                    modifier = Modifier.offset { IntOffset(dragOffset.value.roundToInt(), 0) }
+                    modifier = Modifier.offset { IntOffset(dragOffset.value.roundToInt(), 0) },
+                    symbolAfter = symbolAfter
                 )
 
                 LazyColumn(
@@ -255,9 +314,19 @@ fun DashboardScreen(
                             modifier = Modifier.offset { IntOffset(dragOffset.value.roundToInt(), 0) },
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            // Filter status
+                            if (filter.isActive && filteredTransactions.isNotEmpty()) {
+                                Text(
+                                    text = "Showing ${filteredTransactions.size} of ${uiState.recentTransactions.size} transactions",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                            }
+
                             // Transactions grouped by date
-                            if (uiState.recentTransactions.isNotEmpty()) {
-                                val groupedByDate = uiState.recentTransactions
+                            if (filteredTransactions.isNotEmpty()) {
+                                val groupedByDate = filteredTransactions
                                     .sortedByDescending { it.expense.date }
                                     .groupBy { it.expense.date }
 
@@ -277,6 +346,8 @@ fun DashboardScreen(
                                         )
                                     }
                                 }
+                            } else if (filter.isActive) {
+                                FilteredEmptyState(onClearFilters = viewModel::clearFilters)
                             } else {
                                 EmptyState()
                             }
@@ -291,7 +362,8 @@ fun DashboardScreen(
 @Composable
 fun ExpenseBreakdownCard(
     breakdown: List<CategoryBreakdown>,
-    currency: String
+    currency: String,
+    symbolAfter: Boolean = true
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -311,6 +383,7 @@ fun ExpenseBreakdownCard(
             SimplePieChart(
                 breakdown = breakdown,
                 currency = currency,
+                symbolAfter = symbolAfter,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
@@ -346,7 +419,7 @@ fun ExpenseBreakdownCard(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = formatCurrency(item.amount, currency),
+                        text = formatCurrency(item.amount, currency, symbolAfter),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -360,6 +433,7 @@ fun ExpenseBreakdownCard(
 fun SimplePieChart(
     breakdown: List<CategoryBreakdown>,
     currency: String,
+    symbolAfter: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val total = breakdown.sumOf { it.amount }.toFloat()
@@ -434,7 +508,7 @@ fun SimplePieChart(
         if (selectedIndex in breakdown.indices) {
             val item = breakdown[selectedIndex]
             Text(
-                text = "${item.category?.name ?: "Uncategorized"}: ${formatCurrency(item.amount, currency)} (${item.percentage.toInt()}%)",
+                text = "${item.category?.name ?: "Uncategorized"}: ${formatCurrency(item.amount, currency, symbolAfter)} (${item.percentage.toInt()}%)",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -591,3 +665,204 @@ fun EmptyState() {
         )
     }
 }
+
+@Composable
+fun FilteredEmptyState(onClearFilters: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.FilterList,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "No transactions match your filters",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        TextButton(onClick = onClearFilters) {
+            Text("Clear filters")
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterBottomSheet(
+    filter: TransactionFilter,
+    categories: List<Category>,
+    accounts: List<Account>,
+    onTypeFilter: (TransactionType?) -> Unit,
+    onCategoryFilter: (Long?) -> Unit,
+    onSubcategoryFilter: (Long?) -> Unit,
+    onAccountFilter: (Long?) -> Unit,
+    onSearchQuery: (String) -> Unit,
+    onClearFilters: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val parentCategories = remember(categories) { categories.filter { it.parentCategoryId == null } }
+    val subcategories = remember(categories, filter.categoryId) {
+        if (filter.categoryId != null) categories.filter { it.parentCategoryId == filter.categoryId } else emptyList()
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(bottom = 32.dp)
+                .imePadding(),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text("Filters", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Transaction type
+            Text("Type", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                FilterChip(
+                    selected = filter.transactionType == null,
+                    onClick = { onTypeFilter(null) },
+                    label = { Text("All") }
+                )
+                FilterChip(
+                    selected = filter.transactionType == TransactionType.EXPENSE,
+                    onClick = { onTypeFilter(if (filter.transactionType == TransactionType.EXPENSE) null else TransactionType.EXPENSE) },
+                    label = { Text("Expense") }
+                )
+                FilterChip(
+                    selected = filter.transactionType == TransactionType.INCOME,
+                    onClick = { onTypeFilter(if (filter.transactionType == TransactionType.INCOME) null else TransactionType.INCOME) },
+                    label = { Text("Income") }
+                )
+                FilterChip(
+                    selected = filter.transactionType == TransactionType.TRANSFER,
+                    onClick = { onTypeFilter(if (filter.transactionType == TransactionType.TRANSFER) null else TransactionType.TRANSFER) },
+                    label = { Text("Transfer") }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Category
+            Text("Category", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            FlowChipsRow(
+                items = parentCategories,
+                selectedId = filter.categoryId,
+                allLabel = "All",
+                nameSelector = { it.name },
+                idSelector = { it.id },
+                onSelected = { onCategoryFilter(it) }
+            )
+
+            // Subcategory
+            if (filter.categoryId != null && subcategories.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Subcategory", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                FlowChipsRow(
+                    items = subcategories,
+                    selectedId = filter.subcategoryId,
+                    allLabel = "All",
+                    nameSelector = { it.name },
+                    idSelector = { it.id },
+                    onSelected = { onSubcategoryFilter(it) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Account
+            Text("Account", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            FlowChipsRow(
+                items = accounts,
+                selectedId = filter.accountId,
+                allLabel = "All",
+                nameSelector = { it.name },
+                idSelector = { it.id },
+                onSelected = { onAccountFilter(it) }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Search
+            Text("Search", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            OutlinedTextField(
+                value = filter.searchQuery,
+                onValueChange = onSearchQuery,
+                placeholder = { Text("Search notes...") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                trailingIcon = {
+                    if (filter.searchQuery.isNotBlank()) {
+                        IconButton(onClick = { onSearchQuery("") }) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear search")
+                        }
+                    }
+                }
+            )
+
+            // Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+            ) {
+                TextButton(onClick = { onClearFilters() }) {
+                    Text("Clear")
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Done")
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun <T> FlowChipsRow(
+    items: List<T>,
+    selectedId: Long?,
+    allLabel: String,
+    nameSelector: (T) -> String,
+    idSelector: (T) -> Long,
+    onSelected: (Long?) -> Unit
+) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        FilterChip(
+            selected = selectedId == null,
+            onClick = { onSelected(null) },
+            label = { Text(allLabel, style = MaterialTheme.typography.labelSmall) },
+            modifier = Modifier.height(32.dp)
+        )
+        items.forEach { item ->
+            val id = idSelector(item)
+            FilterChip(
+                selected = selectedId == id,
+                onClick = { onSelected(if (selectedId == id) null else id) },
+                label = { Text(nameSelector(item), style = MaterialTheme.typography.labelSmall) },
+                modifier = Modifier.height(32.dp)
+            )
+        }
+    }
+}
+

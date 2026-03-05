@@ -75,6 +75,7 @@ import java.util.Locale
 @Composable
 fun YearlyReportsScreen(
     currency: String,
+    symbolAfter: Boolean = true,
     viewModel: YearlyReportsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -174,6 +175,7 @@ fun YearlyReportsScreen(
                 balance = uiState.balance,
                 currency = currency,
                 collapseProgress = collapseProgress,
+                symbolAfter = symbolAfter,
                 balanceLabel = "Yearly Balance",
                 modifier = Modifier.offset { IntOffset(dragOffset.value.roundToInt(), 0) }
             )
@@ -234,6 +236,7 @@ fun YearlyReportsScreen(
                                     MonthlyBarChart(
                                         monthlyData = uiState.monthlyData,
                                         currency = currency,
+                                        symbolAfter = symbolAfter,
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
@@ -246,7 +249,8 @@ fun YearlyReportsScreen(
                                 title = "Yearly Expenses by Category",
                                 breakdown = uiState.expenseBreakdown,
                                 currency = currency,
-                                color = ExpenseRed
+                                color = ExpenseRed,
+                                symbolAfter = symbolAfter
                             )
                         }
 
@@ -256,7 +260,8 @@ fun YearlyReportsScreen(
                                 title = "Yearly Income by Category",
                                 breakdown = uiState.incomeBreakdown,
                                 currency = currency,
-                                color = IncomeGreen
+                                color = IncomeGreen,
+                                symbolAfter = symbolAfter
                             )
                         }
 
@@ -264,7 +269,8 @@ fun YearlyReportsScreen(
                         if (uiState.monthlyData.any { it.income > 0 || it.expense > 0 }) {
                             MonthlyBreakdownCard(
                                 monthlyData = uiState.monthlyData,
-                                currency = currency
+                                currency = currency,
+                                symbolAfter = symbolAfter
                             )
                         }
 
@@ -379,7 +385,8 @@ fun YearPickerDialog(
 @Composable
 fun MonthlyBreakdownCard(
     monthlyData: List<MonthData>,
-    currency: String
+    currency: String,
+    symbolAfter: Boolean = true
 ) {
     val maxAmount = monthlyData.maxOfOrNull { maxOf(it.income, it.expense) } ?: 1.0
 
@@ -420,7 +427,8 @@ fun MonthlyBreakdownCard(
                                 currencyCode = currency,
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (balance >= 0) IncomeGreen else ExpenseRed
+                                color = if (balance >= 0) IncomeGreen else ExpenseRed,
+                                symbolAfter = symbolAfter
                             )
                         }
 
@@ -455,7 +463,8 @@ fun MonthlyBreakdownCard(
                                     currencyCode = currency,
                                     style = MaterialTheme.typography.labelSmall,
                                     color = IncomeGreen,
-                                    maxLines = 1
+                                    maxLines = 1,
+                                    symbolAfter = symbolAfter
                                 )
                             }
                         }
@@ -491,7 +500,8 @@ fun MonthlyBreakdownCard(
                                     currencyCode = currency,
                                     style = MaterialTheme.typography.labelSmall,
                                     color = ExpenseRed,
-                                    maxLines = 1
+                                    maxLines = 1,
+                                    symbolAfter = symbolAfter
                                 )
                             }
                         }

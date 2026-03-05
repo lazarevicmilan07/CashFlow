@@ -80,6 +80,7 @@ import com.moneytracker.simplebudget.ui.components.getIconForName
 fun AccountsScreen(
     onNavigateBack: (() -> Unit)? = null,
     currency: String,
+    symbolAfter: Boolean = true,
     viewModel: AccountsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -137,7 +138,8 @@ fun AccountsScreen(
                 item {
                     TotalBalanceCard(
                         totalBalance = accountsState.totalBalance,
-                        currency = currency
+                        currency = currency,
+                        symbolAfter = symbolAfter
                     )
                 }
 
@@ -223,7 +225,8 @@ fun AccountsScreen(
 @Composable
 fun TotalBalanceCard(
     totalBalance: Double,
-    currency: String
+    currency: String,
+    symbolAfter: Boolean = true
 ) {
     val balanceColor = when {
         totalBalance > 0 -> IncomeGreen
@@ -251,7 +254,8 @@ fun TotalBalanceCard(
                 fontWeight = FontWeight.Bold,
                 color = balanceColor,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                symbolAfter = symbolAfter
             )
         }
 

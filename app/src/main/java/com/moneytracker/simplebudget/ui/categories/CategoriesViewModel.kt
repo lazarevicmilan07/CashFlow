@@ -58,6 +58,15 @@ class CategoriesViewModel @Inject constructor(
         }
     }
 
+    fun saveCategoryOrder(categories: List<Category>) {
+        viewModelScope.launch {
+            val ordered = categories.mapIndexed { index, cat ->
+                cat.copy(displayOrder = index)
+            }
+            categoryRepository.updateCategoryOrders(ordered)
+        }
+    }
+
     fun showAddDialog(parentCategoryId: Long? = null) {
         val state = categoriesState.value
         if (!state.canAddMore) {

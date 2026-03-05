@@ -18,7 +18,7 @@ import com.moneytracker.simplebudget.data.local.entity.ExpenseEntity
         CategoryEntity::class,
         AccountEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -79,6 +79,23 @@ abstract class ExpenseDatabase : RoomDatabase() {
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE expenses ADD COLUMN toAccountId INTEGER DEFAULT NULL")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE categories ADD COLUMN displayOrder INTEGER NOT NULL DEFAULT 0")
+                // Assign sequential displayOrder preserving current ordering (default first, then alphabetical)
+                database.execSQL("""
+                    UPDATE categories SET displayOrder = (
+                        SELECT COUNT(*) FROM categories AS c2
+                        WHERE (c2.parentCategoryId IS NULL AND categories.parentCategoryId IS NULL
+                               OR c2.parentCategoryId = categories.parentCategoryId)
+                          AND (c2.isDefault > categories.isDefault
+                               OR (c2.isDefault = categories.isDefault AND c2.name < categories.name)
+                               OR (c2.isDefault = categories.isDefault AND c2.name = categories.name AND c2.id < categories.id))
+                    )
+                """)
             }
         }
     }
