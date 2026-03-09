@@ -51,7 +51,8 @@
       "Bash(git push:*)",
       "Bash(set:*)",
       "Bash(export JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\")",
-      "Bash(JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\" ./gradlew:*)"
+      "Bash(JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\" ./gradlew:*)",
+      "Bash(node:*)"
     ]
   }
 }

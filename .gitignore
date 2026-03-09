@@ -88,3 +88,8 @@ ehthumbs.db
 
 # Secrets
 secrets.properties
+
+# Node.js (used for icon generation tooling)
+node_modules/
+package.json
+package-lock.json
