@@ -4,8 +4,10 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
@@ -25,25 +27,38 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -52,6 +67,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +76,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -96,10 +113,16 @@ import com.moneytracker.simplebudget.ui.components.rememberCollapseProgress
 import com.moneytracker.simplebudget.ui.theme.ExpenseRed
 import com.moneytracker.simplebudget.ui.theme.IncomeGreen
 import com.moneytracker.simplebudget.ui.theme.TransferBlue
+import com.moneytracker.simplebudget.ui.transaction.AccountChip
+import com.moneytracker.simplebudget.ui.transaction.CategoryListItem
+import com.moneytracker.simplebudget.ui.transaction.SubcategoryListItem
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun DashboardScreen(
     onAddTransaction: () -> Unit,
@@ -113,8 +136,18 @@ fun DashboardScreen(
     val isPremium by viewModel.isPremium.collectAsState()
     val filter by viewModel.filter.collectAsState()
     val filteredTransactions by viewModel.filteredTransactions.collectAsState()
+    val selectedTransactionIds by viewModel.selectedTransactionIds.collectAsState()
+    val isMultiSelectMode by viewModel.isMultiSelectMode.collectAsState()
     var showMonthPicker by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var showBulkEditTypeDialog by remember { mutableStateOf(false) }
+    var showBulkDatePicker by remember { mutableStateOf(false) }
+    var showBulkCategoryPicker by remember { mutableStateOf(false) }
+    var showBulkAccountPicker by remember { mutableStateOf(false) }
+    var showBulkNoteDialog by remember { mutableStateOf(false) }
+    BackHandler(enabled = isMultiSelectMode) { viewModel.clearSelection() }
+
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val dragOffset = remember { Animatable(0f) }
@@ -149,24 +182,43 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Transactions") },
+                title = {
+                    if (isMultiSelectMode) Text("${selectedTransactionIds.size} selected")
+                    else Text("Transactions")
+                },
                 actions = {
-                    IconButton(onClick = { showFilterSheet = true }) {
-                        BadgedBox(
-                            badge = {
-                                val activeCount = listOfNotNull(
-                                    filter.transactionType,
-                                    filter.categoryId,
-                                    filter.subcategoryId,
-                                    filter.accountId,
-                                    filter.searchQuery.takeIf { it.isNotBlank() }
-                                ).size
-                                if (activeCount > 0) {
-                                    Badge { Text("$activeCount") }
+                    if (isMultiSelectMode) {
+                        IconButton(onClick = { showDeleteConfirmDialog = true }) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Delete selected",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        IconButton(onClick = { showBulkEditTypeDialog = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit selected")
+                        }
+                        IconButton(onClick = { viewModel.clearSelection() }) {
+                            Icon(Icons.Default.Close, contentDescription = "Cancel selection")
+                        }
+                    } else {
+                        IconButton(onClick = { showFilterSheet = true }) {
+                            BadgedBox(
+                                badge = {
+                                    val activeCount = listOfNotNull(
+                                        filter.transactionType,
+                                        filter.categoryId,
+                                        filter.subcategoryId,
+                                        filter.accountId,
+                                        filter.searchQuery.takeIf { it.isNotBlank() }
+                                    ).size
+                                    if (activeCount > 0) {
+                                        Badge { Text("$activeCount") }
+                                    }
                                 }
+                            ) {
+                                Icon(Icons.Default.FilterList, contentDescription = "Filters")
                             }
-                        ) {
-                            Icon(Icons.Default.FilterList, contentDescription = "Filters")
                         }
                     }
                 }
@@ -258,6 +310,159 @@ fun DashboardScreen(
                     )
                 }
 
+                // --- Multiselect dialogs ---
+
+                if (showDeleteConfirmDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteConfirmDialog = false },
+                        icon = {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        },
+                        title = { Text("Delete Transactions") },
+                        text = {
+                            Text("Delete ${selectedTransactionIds.size} selected transaction(s)? This cannot be undone.")
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    viewModel.deleteSelectedTransactions()
+                                    showDeleteConfirmDialog = false
+                                },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
+                                )
+                            ) { Text("Delete") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
+
+                if (showBulkEditTypeDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showBulkEditTypeDialog = false },
+                        title = { Text("Edit ${selectedTransactionIds.size} Transaction(s)") },
+                        text = {
+                            Column {
+                                listOf(
+                                    "Edit all dates",
+                                    "Edit all categories",
+                                    "Edit all accounts",
+                                    "Edit all notes"
+                                ).forEachIndexed { index, label ->
+                                    TextButton(
+                                        onClick = {
+                                            showBulkEditTypeDialog = false
+                                            when (index) {
+                                                0 -> showBulkDatePicker = true
+                                                1 -> showBulkCategoryPicker = true
+                                                2 -> showBulkAccountPicker = true
+                                                3 -> showBulkNoteDialog = true
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            label,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            textAlign = TextAlign.Start
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showBulkEditTypeDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
+
+                if (showBulkDatePicker) {
+                    val datePickerState = rememberDatePickerState(
+                        initialSelectedDateMillis = System.currentTimeMillis()
+                    )
+                    DatePickerDialog(
+                        onDismissRequest = { showBulkDatePicker = false },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    datePickerState.selectedDateMillis?.let { millis ->
+                                        val date = Instant.ofEpochMilli(millis)
+                                            .atZone(ZoneId.of("UTC"))
+                                            .toLocalDate()
+                                        viewModel.bulkUpdateDate(date)
+                                    }
+                                    showBulkDatePicker = false
+                                }
+                            ) { Text("OK") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showBulkDatePicker = false }) { Text("Cancel") }
+                        }
+                    ) {
+                        DatePicker(state = datePickerState)
+                    }
+                }
+
+                if (showBulkCategoryPicker) {
+                    BulkCategoryPickerSheet(
+                        categories = uiState.categories,
+                        onDismiss = { showBulkCategoryPicker = false },
+                        onConfirm = { categoryId, subcategoryId ->
+                            viewModel.bulkUpdateCategory(categoryId, subcategoryId)
+                            showBulkCategoryPicker = false
+                        }
+                    )
+                }
+
+                if (showBulkAccountPicker) {
+                    BulkAccountPickerSheet(
+                        accounts = uiState.accounts,
+                        onDismiss = { showBulkAccountPicker = false },
+                        onConfirm = { accountId ->
+                            viewModel.bulkUpdateAccount(accountId)
+                            showBulkAccountPicker = false
+                        }
+                    )
+                }
+
+                if (showBulkNoteDialog) {
+                    var noteInput by remember { mutableStateOf("") }
+                    AlertDialog(
+                        onDismissRequest = { showBulkNoteDialog = false },
+                        title = { Text("Edit Note") },
+                        text = {
+                            OutlinedTextField(
+                                value = noteInput,
+                                onValueChange = { noteInput = it },
+                                placeholder = { Text("Enter note for all selected transactions") },
+                                modifier = Modifier.fillMaxWidth(),
+                                maxLines = 3
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    viewModel.bulkUpdateNote(noteInput)
+                                    showBulkNoteDialog = false
+                                }
+                            ) { Text("Apply") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showBulkNoteDialog = false }) { Text("Cancel") }
+                        }
+                    )
+                }
+
                 // Pinned collapsible hero — swipes with content
                 CollapsibleSummaryCard(
                     income = uiState.monthlyStats.totalIncome,
@@ -339,10 +544,17 @@ fun DashboardScreen(
                                     )
 
                                     transactions.forEach { transaction ->
+                                        val txId = transaction.expense.id
                                         CompactTransactionItem(
                                             transaction = transaction,
                                             currency = currency,
-                                            onClick = { onViewTransaction(transaction.expense.id) }
+                                            isSelected = selectedTransactionIds.contains(txId),
+                                            isMultiSelectMode = isMultiSelectMode,
+                                            onLongPress = { viewModel.toggleTransactionSelection(txId) },
+                                            onClick = {
+                                                if (isMultiSelectMode) viewModel.toggleTransactionSelection(txId)
+                                                else onViewTransaction(txId)
+                                            }
                                         )
                                     }
                                 }
@@ -518,10 +730,14 @@ fun SimplePieChart(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CompactTransactionItem(
     transaction: ExpenseWithCategory,
     currency: String,
+    isSelected: Boolean = false,
+    isMultiSelectMode: Boolean = false,
+    onLongPress: () -> Unit = {},
     onClick: () -> Unit
 ) {
     val isExpense = transaction.expense.type == TransactionType.EXPENSE
@@ -534,6 +750,11 @@ fun CompactTransactionItem(
         },
         label = "amount_color"
     )
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                      else MaterialTheme.colorScheme.surface,
+        label = "item_bg"
+    )
     val hasSubcategory = transaction.subcategory != null
     val hasNote = transaction.expense.note.isNotBlank()
     val accountName = transaction.account?.name
@@ -542,8 +763,8 @@ fun CompactTransactionItem(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surface,
+            .combinedClickable(onClick = onClick, onLongClick = onLongPress),
+        color = backgroundColor,
         shape = RoundedCornerShape(8.dp)
     ) {
         Row(
@@ -552,6 +773,17 @@ fun CompactTransactionItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (isMultiSelectMode) {
+                Icon(
+                    imageVector = if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                    contentDescription = null,
+                    tint = if (isSelected) MaterialTheme.colorScheme.primary
+                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+            }
+
             CategoryIcon(
                 icon = if (isTransfer) "swap_horiz" else (transaction.subcategory?.icon ?: transaction.category?.icon ?: "more_horiz"),
                 color = if (isTransfer) TransferBlue else (transaction.subcategory?.color ?: transaction.category?.color ?: Color.Gray),
@@ -829,6 +1061,173 @@ private fun FilterBottomSheet(
                 TextButton(onClick = onDismiss) {
                     Text("Done")
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BulkCategoryPickerSheet(
+    categories: List<Category>,
+    onDismiss: () -> Unit,
+    onConfirm: (categoryId: Long?, subcategoryId: Long?) -> Unit
+) {
+    val parentCategories = remember(categories) { categories.filter { it.parentCategoryId == null } }
+    var selectedParentId by remember { mutableStateOf<Long?>(null) }
+    val subcategories = remember(categories, selectedParentId) {
+        if (selectedParentId != null) categories.filter { it.parentCategoryId == selectedParentId } else emptyList()
+    }
+    var selectedSubcategoryId by remember { mutableStateOf<Long?>(null) }
+
+    val borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+    val typeColor = MaterialTheme.colorScheme.primary
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("Select Category", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, borderColor),
+                color = Color.Transparent
+            ) {
+                val maxRows = maxOf(parentCategories.size, subcategories.size)
+                val contentHeight = (maxRows * 49).dp
+
+                Row(modifier = Modifier.heightIn(max = 340.dp)) {
+                    // Left column — parent categories
+                    Box(modifier = Modifier.weight(1f)) {
+                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                            items(parentCategories) { cat ->
+                                val hasSubcategories = categories.any { it.parentCategoryId == cat.id }
+                                CategoryListItem(
+                                    category = cat,
+                                    isSelected = selectedParentId == cat.id,
+                                    onClick = {
+                                        selectedParentId = if (selectedParentId == cat.id) null else cat.id
+                                        selectedSubcategoryId = null
+                                    },
+                                    showArrow = hasSubcategories,
+                                    typeColor = typeColor
+                                )
+                                HorizontalDivider(thickness = 1.dp, color = borderColor)
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .width(1.dp)
+                                .height(contentHeight)
+                                .background(borderColor)
+                        )
+                    }
+                    // Right column — subcategories
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(subcategories) { sub ->
+                            SubcategoryListItem(
+                                subcategory = sub,
+                                isSelected = sub.id == selectedSubcategoryId,
+                                onClick = {
+                                    selectedSubcategoryId = if (selectedSubcategoryId == sub.id) null else sub.id
+                                }
+                            )
+                            HorizontalDivider(thickness = 1.dp, color = borderColor)
+                        }
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+            ) {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(
+                    onClick = { onConfirm(selectedParentId, selectedSubcategoryId) },
+                    enabled = selectedParentId != null
+                ) { Text("Apply") }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BulkAccountPickerSheet(
+    accounts: List<Account>,
+    onDismiss: () -> Unit,
+    onConfirm: (accountId: Long?) -> Unit
+) {
+    val borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+    val col0 = accounts.filterIndexed { i, _ -> i % 2 == 0 }
+    val col1 = accounts.filterIndexed { i, _ -> i % 2 == 1 }
+    val contentHeight = (maxOf(col0.size, col1.size) * 49).dp
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("Select Account", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, borderColor),
+                color = Color.Transparent
+            ) {
+                Row(modifier = Modifier.heightIn(max = 300.dp)) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                            items(col0) { account ->
+                                AccountChip(
+                                    account = account,
+                                    isSelected = false,
+                                    onClick = { onConfirm(account.id) }
+                                )
+                                HorizontalDivider(thickness = 1.dp, color = borderColor)
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .width(1.dp)
+                                .height(contentHeight)
+                                .background(borderColor)
+                        )
+                    }
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(col1) { account ->
+                            AccountChip(
+                                account = account,
+                                isSelected = false,
+                                onClick = { onConfirm(account.id) }
+                            )
+                            HorizontalDivider(thickness = 1.dp, color = borderColor)
+                        }
+                    }
+                }
+            }
+
+            TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
+                Text("Cancel")
             }
         }
     }

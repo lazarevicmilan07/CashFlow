@@ -5,12 +5,14 @@ import android.net.Uri
 import androidx.compose.ui.graphics.Color
 import com.moneytracker.simplebudget.domain.model.AccountType
 import com.moneytracker.simplebudget.domain.model.TransactionType
+import com.moneytracker.simplebudget.data.preferences.PreferencesManager
 import com.moneytracker.simplebudget.data.repository.AccountRepository
 import com.moneytracker.simplebudget.data.repository.CategoryRepository
 import com.moneytracker.simplebudget.data.repository.ExpenseRepository
 import com.moneytracker.simplebudget.domain.model.Account
 import com.moneytracker.simplebudget.domain.model.Category
 import com.moneytracker.simplebudget.domain.model.Expense
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -25,7 +27,8 @@ import javax.inject.Singleton
 class BackupRestoreUseCase @Inject constructor(
     private val expenseRepository: ExpenseRepository,
     private val categoryRepository: CategoryRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val preferencesManager: PreferencesManager
 ) {
 
     private val json = Json {
@@ -46,12 +49,15 @@ class BackupRestoreUseCase @Inject constructor(
         val expenses = filterExpensesByPeriod(allExpenses, period)
         val categories = categoryRepository.getAllCategoriesSync()
         val accounts = accountRepository.getAllAccountsSync()
+        val prefs = preferencesManager.userPreferences.first()
 
         val backupData = BackupData(
             version = BACKUP_VERSION,
             timestamp = System.currentTimeMillis(),
             periodYear = period.year,
             periodMonth = period.month,
+            currency = prefs.currency,
+            currencySymbolAfter = prefs.currencySymbolAfter,
             expenses = expenses.map { it.toBackupExpense() },
             categories = categories.map { it.toBackupCategory() },
             accounts = accounts.map { it.toBackupAccount() }
@@ -135,10 +141,14 @@ class BackupRestoreUseCase @Inject constructor(
             )
         }
         expenseRepository.insertExpenses(expenses)
+
+        // Restore currency settings if present in backup
+        backupData.currency?.let { preferencesManager.setCurrency(it) }
+        backupData.currencySymbolAfter?.let { preferencesManager.setCurrencySymbolAfter(it) }
     }
 
     companion object {
-        private const val BACKUP_VERSION = 1
+        private const val BACKUP_VERSION = 2
     }
 }
 
@@ -148,6 +158,8 @@ data class BackupData(
     val timestamp: Long,
     val periodYear: Int? = null,
     val periodMonth: Int? = null,
+    val currency: String? = null,
+    val currencySymbolAfter: Boolean? = null,
     val expenses: List<BackupExpense>,
     val categories: List<BackupCategory>,
     val accounts: List<BackupAccount> = emptyList()

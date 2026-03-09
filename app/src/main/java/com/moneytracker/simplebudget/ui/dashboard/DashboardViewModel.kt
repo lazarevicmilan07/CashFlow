@@ -19,8 +19,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 
@@ -52,6 +55,13 @@ class DashboardViewModel @Inject constructor(
 
     private val _filter = MutableStateFlow(TransactionFilter())
     val filter: StateFlow<TransactionFilter> = _filter.asStateFlow()
+
+    private val _selectedTransactionIds = MutableStateFlow<Set<Long>>(emptySet())
+    val selectedTransactionIds: StateFlow<Set<Long>> = _selectedTransactionIds.asStateFlow()
+
+    val isMultiSelectMode: StateFlow<Boolean> = _selectedTransactionIds
+        .map { it.isNotEmpty() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     val filteredTransactions: StateFlow<List<ExpenseWithCategory>> = combine(_uiState, _filter) { state, filter ->
         if (!filter.isActive) {
@@ -196,7 +206,65 @@ class DashboardViewModel @Inject constructor(
     fun deleteExpense(expenseId: Long) {
         viewModelScope.launch {
             expenseRepository.deleteExpenseById(expenseId)
-            // No need to manually refresh - the Flow will automatically emit new data
+        }
+    }
+
+    // --- Multiselect ---
+
+    fun toggleTransactionSelection(id: Long) {
+        _selectedTransactionIds.update { ids -> if (id in ids) ids - id else ids + id }
+    }
+
+    fun clearSelection() {
+        _selectedTransactionIds.value = emptySet()
+    }
+
+    fun deleteSelectedTransactions() {
+        viewModelScope.launch {
+            _selectedTransactionIds.value.toList().forEach { id ->
+                expenseRepository.deleteExpenseById(id)
+            }
+            clearSelection()
+        }
+    }
+
+    fun bulkUpdateDate(date: LocalDate) {
+        viewModelScope.launch {
+            _selectedTransactionIds.value.toList().forEach { id ->
+                val expense = expenseRepository.getExpenseById(id) ?: return@forEach
+                expenseRepository.updateExpense(expense.copy(date = date))
+            }
+            clearSelection()
+        }
+    }
+
+    fun bulkUpdateCategory(categoryId: Long?, subcategoryId: Long?) {
+        viewModelScope.launch {
+            _selectedTransactionIds.value.toList().forEach { id ->
+                val expense = expenseRepository.getExpenseById(id) ?: return@forEach
+                expenseRepository.updateExpense(expense.copy(categoryId = categoryId, subcategoryId = subcategoryId))
+            }
+            clearSelection()
+        }
+    }
+
+    fun bulkUpdateAccount(accountId: Long?) {
+        viewModelScope.launch {
+            _selectedTransactionIds.value.toList().forEach { id ->
+                val expense = expenseRepository.getExpenseById(id) ?: return@forEach
+                expenseRepository.updateExpense(expense.copy(accountId = accountId))
+            }
+            clearSelection()
+        }
+    }
+
+    fun bulkUpdateNote(note: String) {
+        viewModelScope.launch {
+            _selectedTransactionIds.value.toList().forEach { id ->
+                val expense = expenseRepository.getExpenseById(id) ?: return@forEach
+                expenseRepository.updateExpense(expense.copy(note = note))
+            }
+            clearSelection()
         }
     }
 }

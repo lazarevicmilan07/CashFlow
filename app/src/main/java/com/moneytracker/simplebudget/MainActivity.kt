@@ -76,8 +76,10 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.moneytracker.simplebudget.BuildConfig
 import com.moneytracker.simplebudget.data.preferences.PreferencesManager
+import com.moneytracker.simplebudget.data.preferences.ThemeMode
 import com.moneytracker.simplebudget.navigation.NavGraph
 import com.moneytracker.simplebudget.navigation.Screen
 import com.moneytracker.simplebudget.ui.onboarding.OnboardingScreen
@@ -191,7 +193,12 @@ class MainActivity : ComponentActivity() {
         MobileAds.initialize(this) {}
 
         setContent {
-            val isDarkMode by preferencesManager.isDarkMode.collectAsState(initial = true)
+            val themeMode by preferencesManager.themeMode.collectAsState(initial = ThemeMode.DARK)
+            val isDarkMode = when (themeMode) {
+                ThemeMode.DARK -> true
+                ThemeMode.LIGHT -> false
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
             val isPremium by preferencesManager.isPremium.collectAsState(initial = false)
             val onboardingCompleted by preferencesManager.onboardingCompleted.collectAsState(initial = true)
             var showOnboarding by remember { mutableStateOf(false) }

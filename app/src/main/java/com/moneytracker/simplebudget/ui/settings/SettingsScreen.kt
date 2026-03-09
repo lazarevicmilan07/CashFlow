@@ -3,6 +3,7 @@ package com.moneytracker.simplebudget.ui.settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,12 +58,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.moneytracker.simplebudget.data.preferences.ThemeMode
 import com.moneytracker.simplebudget.domain.usecase.ExportPeriodParams
 
 enum class PendingExportAction {
@@ -225,12 +230,50 @@ fun SettingsScreen(
                 }
 
                 item {
-                    SettingsSwitch(
-                        icon = Icons.Default.DarkMode,
-                        title = "Dark Mode",
-                        subtitle = "Use dark theme",
-                        checked = userPreferences.isDarkMode,
-                        onCheckedChange = viewModel::setDarkMode
+                    ListItem(
+                        headlineContent = { Text("Theme") },
+                        leadingContent = {
+                            Icon(
+                                Icons.Default.DarkMode,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        },
+                        trailingContent = {
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .padding(2.dp)
+                            ) {
+                                ThemeMode.entries.forEach { mode ->
+                                    val isSelected = userPreferences.themeMode == mode
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(
+                                                if (isSelected) MaterialTheme.colorScheme.primary
+                                                else Color.Transparent
+                                            )
+                                            .clickable { viewModel.setThemeMode(mode) }
+                                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = when (mode) {
+                                                ThemeMode.SYSTEM -> "Auto"
+                                                ThemeMode.LIGHT -> "Light"
+                                                ThemeMode.DARK -> "Dark"
+                                            },
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     )
                 }
 
@@ -353,7 +396,7 @@ fun SettingsScreen(
                     SettingsItem(
                         icon = Icons.Default.Info,
                         title = "About",
-                        subtitle = "Version 1.0.0",
+                        subtitle = "Version 2.0.0",
                         onClick = { showAboutDialog = true }
                     )
                 }
@@ -450,7 +493,7 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Version 1.0.0",
+                        text = "Version 2.0.0",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(4.dp))

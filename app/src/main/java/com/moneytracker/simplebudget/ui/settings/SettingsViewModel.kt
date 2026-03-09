@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.moneytracker.simplebudget.data.preferences.PreferencesManager
+import com.moneytracker.simplebudget.data.preferences.ThemeMode
 import com.moneytracker.simplebudget.data.preferences.UserPreferences
 import com.moneytracker.simplebudget.domain.usecase.BackupRestoreUseCase
 import com.moneytracker.simplebudget.domain.usecase.ExportPeriodParams
@@ -36,9 +37,9 @@ class SettingsViewModel @Inject constructor(
     private val _events = MutableSharedFlow<SettingsEvent>()
     val events = _events.asSharedFlow()
 
-    fun setDarkMode(enabled: Boolean) {
+    fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
-            preferencesManager.setDarkMode(enabled)
+            preferencesManager.setThemeMode(mode)
         }
     }
 
