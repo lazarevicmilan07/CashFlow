@@ -518,7 +518,7 @@ fun SettingsScreen(
                     SettingsItem(
                         icon = Icons.Default.Info,
                         title = "About",
-                        subtitle = "Version 2.0.0",
+                        subtitle = "Version 3.0.0",
                         onClick = { showAboutDialog = true }
                     )
                 }
@@ -615,7 +615,7 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Version 2.0.0",
+                        text = "Version 3.0.0",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(4.dp))
