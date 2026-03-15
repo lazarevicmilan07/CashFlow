@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun MonthSelector(
@@ -40,7 +41,7 @@ fun MonthSelector(
     onNextMonth: () -> Unit,
     onMonthClick: () -> Unit = {}
 ) {
-    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy")
+    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
 
     Row(
         modifier = Modifier.fillMaxWidth(),

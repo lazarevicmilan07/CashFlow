@@ -55,7 +55,7 @@ data class ExportPeriod(
     fun getFileName(prefix: String, extension: String): String {
         return when (type) {
             PeriodType.MONTH -> {
-                val monthName = Month.of(month!!).getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                val monthName = Month.of(month!!).getDisplayName(TextStyle.SHORT, Locale.ENGLISH)
                 "${prefix}_${monthName}_${year}.${extension}"
             }
             PeriodType.YEAR -> "${prefix}_${year}.${extension}"
@@ -65,7 +65,7 @@ data class ExportPeriod(
     fun getDisplayName(): String {
         return when (type) {
             PeriodType.MONTH -> {
-                val monthName = Month.of(month!!).getDisplayName(TextStyle.FULL, Locale.getDefault())
+                val monthName = Month.of(month!!).getDisplayName(TextStyle.FULL, Locale.ENGLISH)
                 "$monthName $year"
             }
             PeriodType.YEAR -> year.toString()

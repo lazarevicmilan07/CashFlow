@@ -52,7 +52,27 @@
       "Bash(set:*)",
       "Bash(export JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\")",
       "Bash(JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\" ./gradlew:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-17\" ./gradlew assembleDebug:*)",
+      "Bash(reg query:*)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug:*)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files/Microsoft//**)",
+      "Bash(cd \"C:/ComData/Projekti/MoneyTracker\" && JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1)",
+      "Bash(cd \"C:/ComData/Projekti/MoneyTracker\" && JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | tail -20)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | tail -20)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | tail -10)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | tail -8)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | grep -E \"error:|Error\" | head -20)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | grep -i \"error\\\\|unresolved\\\\|cannot\\\\|not found\" | head -30)",
+      "Bash(wait && JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | grep -E \"BUILD|error:\" | tail -5)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | grep \"error:\" | head -10)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug --info 2>&1 | grep -E \"error:|e:\" | head -20)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | grep -A2 \"SettingsScreen\")",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew compileDebugKotlin 2>&1 | tail -30)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | grep -v \"UP-TO-DATE\\\\|Caching\\\\|daemon\\\\|Starting\\\\|Build\\\\|action\\\\|Task :\" | tail -30)",
+      "Bash(find \"C:/ComData/Projekti/WorkoutLog\" -name \"*.kt\" | xargs grep -l \"PendingIntent\\\\|Notification\" 2>/dev/null)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1 | tail -6)"
     ]
   }
 }

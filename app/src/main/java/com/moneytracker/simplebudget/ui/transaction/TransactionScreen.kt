@@ -102,6 +102,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -493,8 +494,8 @@ fun TransactionFormFields(
     val selectedToAccount = accounts.find { it.id == uiState.toAccountId }
     val displayedCategory = (uiState.selectedCategoryId?.let { id -> allCategories.find { it.id == id } }
         ?: uiState.selectedParentCategoryId?.let { id -> allCategories.find { it.id == id } })
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-    val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEE")
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.ENGLISH)
+    val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH)
 
     Column {
         // Date Field

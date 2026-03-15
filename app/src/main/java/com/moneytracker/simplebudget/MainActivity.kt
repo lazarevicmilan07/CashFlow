@@ -76,8 +76,10 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.moneytracker.simplebudget.BuildConfig
 import com.moneytracker.simplebudget.data.preferences.PreferencesManager
+import com.moneytracker.simplebudget.data.preferences.ThemeMode
 import com.moneytracker.simplebudget.navigation.NavGraph
 import com.moneytracker.simplebudget.navigation.Screen
 import com.moneytracker.simplebudget.ui.onboarding.OnboardingScreen
@@ -140,13 +142,32 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var preferencesManager: PreferencesManager
 
+    override fun onResume() {
+        super.onResume()
+        androidx.core.app.NotificationManagerCompat.from(this)
+            .cancel(com.moneytracker.simplebudget.notifications.ReminderNotificationHelper.NOTIFICATION_ID)
+    }
+
+    /** Handles re-delivery when the activity is already running (singleTop). */
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        // Modern exit animation: icon zooms up and fades while background slides away
+        // Modern exit animation: icon zooms up and fades while background slides away.
+        // When launched from a notification, accessing splashScreenView.iconView can throw
+        // an NPE inside the AndroidX SplashScreen library — wrap in try-catch and fall back
+        // to an instant dismiss in that case.
         splashScreen.setOnExitAnimationListener { splashScreenView ->
-            val iconView = splashScreenView.iconView
+            val iconView = try { splashScreenView.iconView } catch (_: Exception) { null }
+
+            if (iconView == null) {
+                splashScreenView.remove()
+                return@setOnExitAnimationListener
+            }
 
             // Icon zoom up animation (creates "diving into app" effect)
             val iconScaleX = ObjectAnimator.ofFloat(iconView, View.SCALE_X, 1f, 1.5f)
@@ -162,14 +183,12 @@ class MainActivity : ComponentActivity() {
             )
             val backgroundFade = ObjectAnimator.ofFloat(splashScreenView.view, View.ALPHA, 1f, 0f)
 
-            // Icon animation set
             val iconAnimator = AnimatorSet().apply {
                 playTogether(iconScaleX, iconScaleY, iconFade)
                 duration = 400L
                 interpolator = DecelerateInterpolator(1.5f)
             }
 
-            // Background animation set
             val backgroundAnimator = AnimatorSet().apply {
                 playTogether(backgroundSlide, backgroundFade)
                 duration = 350L
@@ -177,7 +196,6 @@ class MainActivity : ComponentActivity() {
                 interpolator = AnticipateOvershootInterpolator(0.5f)
             }
 
-            // Play all animations
             AnimatorSet().apply {
                 playTogether(iconAnimator, backgroundAnimator)
                 doOnEnd { splashScreenView.remove() }
@@ -191,15 +209,21 @@ class MainActivity : ComponentActivity() {
         MobileAds.initialize(this) {}
 
         setContent {
-            val isDarkMode by preferencesManager.isDarkMode.collectAsState(initial = true)
+            val themeMode by preferencesManager.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
+            val isDarkMode = when (themeMode) {
+                ThemeMode.DARK -> true
+                ThemeMode.LIGHT -> false
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
             val isPremium by preferencesManager.isPremium.collectAsState(initial = false)
             val onboardingCompleted by preferencesManager.onboardingCompleted.collectAsState(initial = true)
             var showOnboarding by remember { mutableStateOf(false) }
+            var onboardingFinished by remember { mutableStateOf(false) }
             val coroutineScope = rememberCoroutineScope()
 
-            // Only show onboarding once the preference is loaded and it hasn't been completed
-            // Initial value is true to avoid flash; once the real value loads, we update
-            if (!onboardingCompleted && !showOnboarding) {
+            // Only show onboarding once the preference is loaded and it hasn't been completed.
+            // onboardingFinished guards against re-triggering while the async DataStore write settles.
+            if (!onboardingCompleted && !showOnboarding && !onboardingFinished) {
                 showOnboarding = true
             }
 
@@ -207,10 +231,11 @@ class MainActivity : ComponentActivity() {
                 if (showOnboarding) {
                     OnboardingScreen(
                         onFinish = {
+                            onboardingFinished = true
+                            showOnboarding = false
                             coroutineScope.launch {
                                 preferencesManager.setOnboardingCompleted(true)
                             }
-                            showOnboarding = false
                         }
                     )
                 } else {

@@ -144,7 +144,7 @@ fun MonthlyBarChart(
         // Tooltip or Legend
         if (selectedMonth in monthlyData.indices) {
             val data = monthlyData[selectedMonth]
-            val monthName = Month.of(selectedMonth + 1).getDisplayName(TextStyle.FULL, Locale.getDefault())
+            val monthName = Month.of(selectedMonth + 1).getDisplayName(TextStyle.FULL, Locale.ENGLISH)
             Spacer(modifier = Modifier.height(8.dp))
             Column(
                 modifier = Modifier.fillMaxWidth(),

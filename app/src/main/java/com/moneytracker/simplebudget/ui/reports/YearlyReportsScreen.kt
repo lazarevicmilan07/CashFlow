@@ -402,7 +402,7 @@ fun MonthlyBreakdownCard(
 
             monthlyData.forEachIndexed { index, data ->
                 if (data.income > 0 || data.expense > 0) {
-                    val monthName = Month.of(index + 1).getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                    val monthName = Month.of(index + 1).getDisplayName(TextStyle.SHORT, Locale.ENGLISH)
                     val balance = data.income - data.expense
                     val incomeFraction = if (maxAmount > 0) (data.income / maxAmount).toFloat() else 0f
                     val expenseFraction = if (maxAmount > 0) (data.expense / maxAmount).toFloat() else 0f

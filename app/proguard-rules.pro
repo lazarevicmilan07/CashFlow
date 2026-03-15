@@ -36,5 +36,12 @@
 # Vico Charts
 -keep class com.patrykandpatrick.vico.** { *; }
 
+# WorkManager
+-keep class * extends androidx.work.Worker
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+-keep class androidx.work.** { *; }
+
 # Suppress missing SLF4J implementation warning
 -dontwarn org.slf4j.impl.StaticLoggerBinder

@@ -5,10 +5,14 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.moneytracker.simplebudget.data.preferences.PreferencesManager
+import com.moneytracker.simplebudget.data.preferences.ThemeMode
 import com.moneytracker.simplebudget.data.preferences.UserPreferences
 import com.moneytracker.simplebudget.domain.usecase.BackupRestoreUseCase
 import com.moneytracker.simplebudget.domain.usecase.ExportPeriodParams
 import com.moneytracker.simplebudget.domain.usecase.ExportUseCase
+import com.moneytracker.simplebudget.notifications.ReminderManager
+import com.moneytracker.simplebudget.notifications.ReminderPreferences
+import com.moneytracker.simplebudget.notifications.ReminderSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,11 +29,16 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager,
     private val exportUseCase: ExportUseCase,
-    private val backupRestoreUseCase: BackupRestoreUseCase
+    private val backupRestoreUseCase: BackupRestoreUseCase,
+    private val reminderPreferences: ReminderPreferences,
+    private val reminderManager: ReminderManager
 ) : ViewModel() {
 
     val userPreferences: StateFlow<UserPreferences> = preferencesManager.userPreferences
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UserPreferences())
+
+    val reminderSettings: StateFlow<ReminderSettings> = reminderPreferences.settings
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ReminderSettings())
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -36,9 +46,9 @@ class SettingsViewModel @Inject constructor(
     private val _events = MutableSharedFlow<SettingsEvent>()
     val events = _events.asSharedFlow()
 
-    fun setDarkMode(enabled: Boolean) {
+    fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
-            preferencesManager.setDarkMode(enabled)
+            preferencesManager.setThemeMode(mode)
         }
     }
 
@@ -127,6 +137,22 @@ class SettingsViewModel @Inject constructor(
     fun setPremium(isPremium: Boolean) {
         viewModelScope.launch {
             preferencesManager.setPremium(isPremium)
+        }
+    }
+
+    fun setReminderEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            val updated = reminderPreferences.settings.first().copy(enabled = enabled)
+            reminderPreferences.save(updated)
+            if (enabled) reminderManager.scheduleReminder(updated)
+            else reminderManager.cancelReminder()
+        }
+    }
+
+    fun updateReminderSettings(settings: ReminderSettings) {
+        viewModelScope.launch {
+            reminderPreferences.save(settings)
+            if (settings.enabled) reminderManager.scheduleReminder(settings)
         }
     }
 }

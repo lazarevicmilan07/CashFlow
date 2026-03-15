@@ -46,7 +46,7 @@ data class ExportPeriodParams(
     }
 
     fun getPeriodTitle(): String = if (month != null) {
-        val monthName = Month.of(month).getDisplayName(TextStyle.FULL, Locale.getDefault())
+        val monthName = Month.of(month).getDisplayName(TextStyle.FULL, Locale.ENGLISH)
         "$monthName $year"
     } else {
         "Year $year"
@@ -190,7 +190,7 @@ class ExportUseCase @Inject constructor(
                     )
                 }
 
-                val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
+                val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)
 
                 expenses.forEach { expense ->
                     val categoryName = expense.categoryId?.let { categoriesMap[it]?.name } ?: ""

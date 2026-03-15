@@ -56,6 +56,7 @@ import com.moneytracker.simplebudget.ui.theme.IncomeGreen
 import com.moneytracker.simplebudget.ui.theme.TransferBlue
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,7 +182,7 @@ fun TransactionDetailContent(
         TransactionType.INCOME -> IncomeGreen
         TransactionType.TRANSFER -> TransferBlue
     }
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(Locale.ENGLISH)
 
     Column(
         modifier = modifier,
