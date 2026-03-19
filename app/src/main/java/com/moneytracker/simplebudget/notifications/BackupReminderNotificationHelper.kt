@@ -19,6 +19,7 @@ object BackupReminderNotificationHelper {
 
     private const val CHANNEL_ID = "backup_reminder"
     const val NOTIFICATION_ID = 3002
+    const val EXTRA_OPEN_SETTINGS = "open_settings"
 
     private val dailyMessages = listOf(
         "Don't forget to back up your data today \uD83D\uDCBE",
@@ -80,6 +81,7 @@ object BackupReminderNotificationHelper {
         }
         val openIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_OPEN_SETTINGS, true)
         }
         val pendingIntent = PendingIntent.getActivity(
             context, 1, openIntent,

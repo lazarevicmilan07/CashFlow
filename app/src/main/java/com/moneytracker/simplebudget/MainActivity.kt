@@ -51,6 +51,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -142,6 +143,8 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var preferencesManager: PreferencesManager
 
+    private val openSettings = mutableStateOf(false)
+
     override fun onResume() {
         super.onResume()
         androidx.core.app.NotificationManagerCompat.from(this)
@@ -151,6 +154,13 @@ class MainActivity : ComponentActivity() {
     /** Handles re-delivery when the activity is already running (singleTop). */
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
+        if (intent.getBooleanExtra(
+                com.moneytracker.simplebudget.notifications.BackupReminderNotificationHelper.EXTRA_OPEN_SETTINGS,
+                false
+            )
+        ) {
+            openSettings.value = true
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -205,6 +215,14 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        if (intent.getBooleanExtra(
+                com.moneytracker.simplebudget.notifications.BackupReminderNotificationHelper.EXTRA_OPEN_SETTINGS,
+                false
+            )
+        ) {
+            openSettings.value = true
+        }
+
         // Initialize Google Mobile Ads SDK
         MobileAds.initialize(this) {}
 
@@ -242,6 +260,16 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
+
+                    LaunchedEffect(openSettings.value) {
+                        if (openSettings.value) {
+                            openSettings.value = false
+                            navController.navigate(Screen.Settings.route) {
+                                popUpTo(Screen.Dashboard.route) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
 
                     val bottomNavItems = listOf(
                         BottomNavItem.Records,
