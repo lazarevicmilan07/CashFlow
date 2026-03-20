@@ -4,6 +4,7 @@ import com.moneytracker.simplebudget.data.local.dao.CategoryDao
 import com.moneytracker.simplebudget.data.mapper.toDomain
 import com.moneytracker.simplebudget.data.mapper.toEntity
 import com.moneytracker.simplebudget.domain.model.Category
+import com.moneytracker.simplebudget.domain.model.CategoryType
 import com.moneytracker.simplebudget.domain.model.DefaultCategories
 import com.moneytracker.simplebudget.domain.model.DefaultSubcategories
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +27,11 @@ class CategoryRepository @Inject constructor(
             entities.map { it.toDomain() }
         }
 
+    fun getRootCategoriesByType(type: CategoryType): Flow<List<Category>> =
+        categoryDao.getRootCategoriesByType(type.name).map { entities ->
+            entities.map { it.toDomain() }
+        }
+
     fun getSubcategories(parentId: Long): Flow<List<Category>> =
         categoryDao.getSubcategories(parentId).map { entities ->
             entities.map { it.toDomain() }
@@ -41,7 +47,7 @@ class CategoryRepository @Inject constructor(
         categoryDao.getCategoryCount()
 
     suspend fun insertCategory(category: Category): Long {
-        val withOrder = if (category.displayOrder == 0 && category.id == 0L) {
+        var resolved = if (category.displayOrder == 0 && category.id == 0L) {
             val nextOrder = if (category.parentCategoryId != null) {
                 categoryDao.getNextSubcategoryDisplayOrder(category.parentCategoryId)
             } else {
@@ -51,7 +57,14 @@ class CategoryRepository @Inject constructor(
         } else {
             category
         }
-        return categoryDao.insertCategory(withOrder.toEntity())
+        // Subcategory inherits parent's categoryType
+        if (resolved.parentCategoryId != null) {
+            val parentType = categoryDao.getCategoryById(resolved.parentCategoryId)?.categoryType
+            if (parentType != null) {
+                resolved = resolved.copy(categoryType = CategoryType.valueOf(parentType))
+            }
+        }
+        return categoryDao.insertCategory(resolved.toEntity())
     }
 
     suspend fun updateCategory(category: Category) =
@@ -85,7 +98,8 @@ class CategoryRepository @Inject constructor(
                         color = color,
                         isDefault = true,
                         parentCategoryId = parentEntity.id,
-                        displayOrder = index
+                        displayOrder = index,
+                        categoryType = defaultCategory.categoryType
                     ).toEntity()
                 }
                 categoryDao.insertCategories(subcategories)

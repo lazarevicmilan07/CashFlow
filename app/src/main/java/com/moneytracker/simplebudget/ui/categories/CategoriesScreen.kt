@@ -58,9 +58,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.moneytracker.simplebudget.domain.model.Category
+import com.moneytracker.simplebudget.domain.model.CategoryType
 import com.moneytracker.simplebudget.ui.components.AvailableColors
 import com.moneytracker.simplebudget.ui.components.AvailableIcons
 import com.moneytracker.simplebudget.ui.components.CategoryIcon
+import com.moneytracker.simplebudget.ui.components.TogglePill
 import com.moneytracker.simplebudget.ui.components.dragHandle
 import com.moneytracker.simplebudget.ui.components.draggableItem
 import com.moneytracker.simplebudget.ui.components.getIconForName
@@ -85,6 +87,7 @@ fun CategoriesScreen(
     val uiState by viewModel.uiState.collectAsState()
     val categoriesState by viewModel.categoriesState.collectAsState()
     val expandedCategories by viewModel.expandedCategories.collectAsState()
+    val selectedCategoryType by viewModel.selectedCategoryType.collectAsState()
     val context = LocalContext.current
 
     var categoryToDelete by remember { mutableStateOf<Category?>(null) }
@@ -174,6 +177,14 @@ fun CategoriesScreen(
                     }
                 },
                 actions = {
+                    TogglePill(
+                        leftLabel = "Expenses",
+                        rightLabel = "Income",
+                        leftSelected = selectedCategoryType == CategoryType.EXPENSE,
+                        onSelect = { isExpense ->
+                            viewModel.selectCategoryType(if (isExpense) CategoryType.EXPENSE else CategoryType.INCOME)
+                        }
+                    )
                     IconButton(onClick = { viewModel.showAddDialog() }) {
                         Icon(Icons.Default.Add, contentDescription = "Add Category")
                     }

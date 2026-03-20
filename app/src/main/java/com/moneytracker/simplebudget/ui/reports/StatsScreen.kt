@@ -2,10 +2,7 @@ package com.moneytracker.simplebudget.ui.reports
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -50,6 +46,7 @@ import com.moneytracker.simplebudget.ui.components.MonthSelector
 import com.moneytracker.simplebudget.ui.components.MonthYearPickerDialog
 import com.moneytracker.simplebudget.ui.components.MonthlyBarChart
 import com.moneytracker.simplebudget.ui.components.ScrollToTopButton
+import com.moneytracker.simplebudget.ui.components.TogglePill
 import com.moneytracker.simplebudget.ui.components.rememberCollapseProgress
 import com.moneytracker.simplebudget.ui.theme.ExpenseRed
 import com.moneytracker.simplebudget.ui.theme.IncomeGreen
@@ -76,7 +73,7 @@ fun StatsScreen(
             TopAppBar(
                 title = { Text("Stats") },
                 actions = {
-                    StatsTogglePill(isMonthly = isMonthly, onSelect = { isMonthly = it })
+                    TogglePill(leftLabel = "Monthly", rightLabel = "Yearly", leftSelected = isMonthly, onSelect = { isMonthly = it })
                     Spacer(modifier = Modifier.width(8.dp))
                 }
             )
@@ -428,42 +425,3 @@ private fun YearlyStatsContent(
     }
 }
 
-@Composable
-private fun StatsTogglePill(
-    isMonthly: Boolean,
-    onSelect: (Boolean) -> Unit
-) {
-    val primary = MaterialTheme.colorScheme.primary
-    val onPrimary = MaterialTheme.colorScheme.onPrimary
-    val surface = MaterialTheme.colorScheme.surfaceVariant
-    val onSurface = MaterialTheme.colorScheme.onSurfaceVariant
-
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(surface)
-            .padding(2.dp)
-    ) {
-        listOf(true to "Monthly", false to "Yearly").forEach { (monthly, label) ->
-            val selected = isMonthly == monthly
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(if (selected) primary else androidx.compose.ui.graphics.Color.Transparent)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { onSelect(monthly) }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (selected) onPrimary else onSurface
-                )
-            }
-        }
-    }
-}

@@ -11,6 +11,7 @@ import com.moneytracker.simplebudget.data.repository.CategoryRepository
 import com.moneytracker.simplebudget.data.repository.ExpenseRepository
 import com.moneytracker.simplebudget.domain.model.Account
 import com.moneytracker.simplebudget.domain.model.Category
+import com.moneytracker.simplebudget.domain.model.CategoryType
 import com.moneytracker.simplebudget.domain.model.Expense
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
@@ -187,7 +188,8 @@ data class BackupCategory(
     val isDefault: Boolean,
     val parentCategoryId: Long? = null,
     val createdAt: Long,
-    val displayOrder: Int = 0
+    val displayOrder: Int = 0,
+    val categoryType: String = "EXPENSE"
 )
 
 @Serializable
@@ -226,6 +228,9 @@ private fun BackupExpense.toExpense() = Expense(
     createdAt = createdAt
 )
 
+// Default income category names used for backward-compat restore of old backups
+private val defaultIncomeNames = setOf("Salary", "Investment")
+
 private fun Category.toBackupCategory() = BackupCategory(
     id = id,
     name = name,
@@ -234,19 +239,31 @@ private fun Category.toBackupCategory() = BackupCategory(
     isDefault = isDefault,
     parentCategoryId = parentCategoryId,
     createdAt = createdAt,
-    displayOrder = displayOrder
+    displayOrder = displayOrder,
+    categoryType = categoryType.name
 )
 
-private fun BackupCategory.toCategory() = Category(
-    id = id,
-    name = name,
-    icon = icon,
-    color = Color(color.toULong()),
-    isDefault = isDefault,
-    parentCategoryId = parentCategoryId,
-    createdAt = createdAt,
-    displayOrder = displayOrder
-)
+private fun BackupCategory.toCategory(): Category {
+    // For old backups that lack categoryType, infer INCOME for known default income roots
+    val resolvedType = if (categoryType != "EXPENSE") {
+        CategoryType.valueOf(categoryType)
+    } else if (isDefault && parentCategoryId == null && name in defaultIncomeNames) {
+        CategoryType.INCOME
+    } else {
+        CategoryType.EXPENSE
+    }
+    return Category(
+        id = id,
+        name = name,
+        icon = icon,
+        color = Color(color.toULong()),
+        isDefault = isDefault,
+        parentCategoryId = parentCategoryId,
+        createdAt = createdAt,
+        displayOrder = displayOrder,
+        categoryType = resolvedType
+    )
+}
 
 private fun Account.toBackupAccount() = BackupAccount(
     id = id,

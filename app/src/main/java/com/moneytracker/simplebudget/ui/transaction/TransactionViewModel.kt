@@ -3,6 +3,7 @@ package com.moneytracker.simplebudget.ui.transaction
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.moneytracker.simplebudget.domain.model.CategoryType
 import com.moneytracker.simplebudget.domain.model.TransactionType
 import com.moneytracker.simplebudget.data.preferences.PreferencesManager
 import com.moneytracker.simplebudget.data.repository.AccountRepository
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -67,9 +69,17 @@ class TransactionViewModel @Inject constructor(
     private val allCategories: StateFlow<List<Category>> = categoryRepository.getAllCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Root categories (no parent) for initial selection
-    val rootCategories: StateFlow<List<Category>> = categoryRepository.getRootCategories()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    // Root categories filtered by current transaction type
+    val rootCategories: StateFlow<List<Category>> = combine(
+        categoryRepository.getRootCategories(),
+        _uiState
+    ) { roots, state ->
+        when (state.transactionType) {
+            TransactionType.EXPENSE -> roots.filter { it.categoryType == CategoryType.EXPENSE }
+            TransactionType.INCOME -> roots.filter { it.categoryType == CategoryType.INCOME }
+            TransactionType.TRANSFER -> emptyList()
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Subcategories of currently selected parent category
     private val _selectedParentCategoryId = MutableStateFlow<Long?>(null)
@@ -179,9 +189,11 @@ class TransactionViewModel @Inject constructor(
     fun updateAmount(amount: String) {
         shouldClearAmount = false
         val filtered = amount.filter { it.isDigit() || it == '.' || it == '-' }
-        if (filtered.count { it == '.' } <= 1) {
-            _uiState.value = _uiState.value.copy(amount = filtered)
-        }
+        if (filtered.count { it == '.' } > 1) return
+        val withoutSign = filtered.removePrefix("-")
+        val intPart = if (withoutSign.contains(".")) withoutSign.substringBefore(".") else withoutSign
+        if (intPart.length > MAX_INTEGER_DIGITS) return
+        _uiState.value = _uiState.value.copy(amount = filtered)
     }
 
     fun appendToAmount(digit: String) {
@@ -192,8 +204,14 @@ class TransactionViewModel @Inject constructor(
         }
         val current = _uiState.value.amount
         if (digit == "." && current.replace("-", "").contains(".")) return
-        val newAmount = current + digit
-        _uiState.value = _uiState.value.copy(amount = newAmount)
+        val withoutSign = current.removePrefix("-")
+        val hasDecimal = withoutSign.contains(".")
+        if (hasDecimal) {
+            if (digit != "." && withoutSign.substringAfter(".").length >= 2) return
+        } else {
+            if (digit != "." && withoutSign.length >= MAX_INTEGER_DIGITS) return
+        }
+        _uiState.value = _uiState.value.copy(amount = current + digit)
     }
 
     fun deleteLastDigit() {
@@ -350,13 +368,22 @@ class TransactionViewModel @Inject constructor(
     }
 
     fun selectTransactionType(type: TransactionType) {
-        _uiState.value = _uiState.value.copy(
+        val current = _uiState.value
+        val typeChanged = type != current.transactionType
+        val clearCategory = type == TransactionType.TRANSFER ||
+            (typeChanged && (type == TransactionType.INCOME || current.transactionType == TransactionType.INCOME))
+        if (clearCategory) {
+            subcategoryCollectionJob?.cancel()
+            subcategoryCollectionJob = null
+            _selectedParentCategoryId.value = null
+            _availableSubcategories.value = emptyList()
+        }
+        _uiState.value = current.copy(
             transactionType = type,
-            // Reset selections when changing type
-            selectedCategoryId = if (type == TransactionType.TRANSFER) null else _uiState.value.selectedCategoryId,
-            selectedParentCategoryId = if (type == TransactionType.TRANSFER) null else _uiState.value.selectedParentCategoryId,
-            toAccountId = if (type != TransactionType.TRANSFER) null else _uiState.value.toAccountId
-            // Don't change currentField - keep focus where it was
+            selectedCategoryId = if (clearCategory) null else current.selectedCategoryId,
+            selectedParentCategoryId = if (clearCategory) null else current.selectedParentCategoryId,
+            showSubcategorySelector = if (clearCategory) false else current.showSubcategorySelector,
+            toAccountId = if (type != TransactionType.TRANSFER) null else current.toAccountId
         )
     }
 
@@ -473,6 +500,10 @@ class TransactionViewModel @Inject constructor(
             expenseRepository.deleteExpenseById(id)
             _events.emit(TransactionEvent.TransactionDeleted)
         }
+    }
+
+    companion object {
+        private const val MAX_INTEGER_DIGITS = 9
     }
 }
 

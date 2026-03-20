@@ -8,6 +8,7 @@ import com.moneytracker.simplebudget.data.local.entity.ExpenseEntity
 import com.moneytracker.simplebudget.domain.model.Account
 import com.moneytracker.simplebudget.domain.model.AccountWithBalance
 import com.moneytracker.simplebudget.domain.model.Category
+import com.moneytracker.simplebudget.domain.model.CategoryType
 import com.moneytracker.simplebudget.domain.model.Expense
 import java.time.Instant
 import java.time.LocalDate
@@ -21,7 +22,8 @@ fun CategoryEntity.toDomain(): Category = Category(
     isDefault = isDefault,
     parentCategoryId = parentCategoryId,
     createdAt = createdAt,
-    displayOrder = displayOrder
+    displayOrder = displayOrder,
+    categoryType = CategoryType.valueOf(categoryType)
 )
 
 fun Category.toEntity(): CategoryEntity = CategoryEntity(
@@ -32,7 +34,8 @@ fun Category.toEntity(): CategoryEntity = CategoryEntity(
     isDefault = isDefault,
     parentCategoryId = parentCategoryId,
     createdAt = createdAt,
-    displayOrder = displayOrder
+    displayOrder = displayOrder,
+    categoryType = categoryType.name
 )
 
 fun ExpenseEntity.toDomain(): Expense = Expense(

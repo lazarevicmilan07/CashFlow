@@ -17,5 +17,6 @@ data class CategoryEntity(
     val isDefault: Boolean = false,
     val parentCategoryId: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
-    val displayOrder: Int = 0
+    val displayOrder: Int = 0,
+    val categoryType: String = "EXPENSE"
 )

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.moneytracker.simplebudget.data.preferences.PreferencesManager
 import com.moneytracker.simplebudget.data.repository.CategoryRepository
 import com.moneytracker.simplebudget.domain.model.Category
+import com.moneytracker.simplebudget.domain.model.CategoryType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,11 +31,15 @@ class CategoriesViewModel @Inject constructor(
     private val _expandedCategories = MutableStateFlow<Set<Long>>(emptySet())
     val expandedCategories: StateFlow<Set<Long>> = _expandedCategories.asStateFlow()
 
+    private val _selectedCategoryType = MutableStateFlow(CategoryType.EXPENSE)
+    val selectedCategoryType: StateFlow<CategoryType> = _selectedCategoryType.asStateFlow()
+
     val categoriesState: StateFlow<CategoriesListState> = combine(
         categoryRepository.getAllCategories(),
-        preferencesManager.isPremium
-    ) { categories, isPremium ->
-        val rootCategories = categories.filter { it.parentCategoryId == null }
+        preferencesManager.isPremium,
+        _selectedCategoryType
+    ) { categories, isPremium, selectedType ->
+        val rootCategories = categories.filter { it.parentCategoryId == null && it.categoryType == selectedType }
         val subcategoriesMap = categories
             .filter { it.parentCategoryId != null }
             .groupBy { it.parentCategoryId!! }
@@ -46,6 +51,10 @@ class CategoriesViewModel @Inject constructor(
             canAddMore = true // Unlimited categories
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CategoriesListState())
+
+    fun selectCategoryType(type: CategoryType) {
+        _selectedCategoryType.value = type
+    }
 
     private val _events = MutableSharedFlow<CategoryEvent>()
     val events = _events.asSharedFlow()
@@ -120,13 +129,19 @@ class CategoriesViewModel @Inject constructor(
                 return@launch
             }
 
+            val isNewRootCategory = state.editingCategory == null && state.parentCategoryId == null
             val category = Category(
                 id = state.editingCategory?.id ?: 0,
                 name = state.dialogName.trim(),
                 icon = state.dialogIcon,
                 color = state.dialogColor,
                 isDefault = state.editingCategory?.isDefault ?: false,
-                parentCategoryId = state.editingCategory?.parentCategoryId ?: state.parentCategoryId
+                parentCategoryId = state.editingCategory?.parentCategoryId ?: state.parentCategoryId,
+                categoryType = when {
+                    state.editingCategory != null -> state.editingCategory.categoryType
+                    isNewRootCategory -> _selectedCategoryType.value
+                    else -> _selectedCategoryType.value // subcategory: inherited via repository
+                }
             )
 
             if (state.editingCategory != null) {

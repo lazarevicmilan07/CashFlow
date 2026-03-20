@@ -18,7 +18,7 @@ import com.moneytracker.simplebudget.data.local.entity.ExpenseEntity
         CategoryEntity::class,
         AccountEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -94,6 +94,24 @@ abstract class ExpenseDatabase : RoomDatabase() {
                           AND (c2.isDefault > categories.isDefault
                                OR (c2.isDefault = categories.isDefault AND c2.name < categories.name)
                                OR (c2.isDefault = categories.isDefault AND c2.name = categories.name AND c2.id < categories.id))
+                    )
+                """)
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE categories ADD COLUMN categoryType TEXT NOT NULL DEFAULT 'EXPENSE'")
+                // Tag root income categories
+                database.execSQL("""
+                    UPDATE categories SET categoryType = 'INCOME'
+                    WHERE name IN ('Salary','Investment') AND parentCategoryId IS NULL
+                """)
+                // Tag their subcategories
+                database.execSQL("""
+                    UPDATE categories SET categoryType = 'INCOME'
+                    WHERE parentCategoryId IN (
+                        SELECT id FROM categories WHERE name IN ('Salary','Investment') AND parentCategoryId IS NULL
                     )
                 """)
             }
