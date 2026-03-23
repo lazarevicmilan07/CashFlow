@@ -92,7 +92,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.moneytracker.simplebudget.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -152,14 +154,14 @@ fun SettingsScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) viewModel.setReminderEnabled(true)
-        else Toast.makeText(context, "Notification permission is required for reminders", Toast.LENGTH_SHORT).show()
+        else Toast.makeText(context, context.getString(R.string.notification_permission_required), Toast.LENGTH_SHORT).show()
     }
 
     val backupNotificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) viewModel.setBackupReminderEnabled(true)
-        else Toast.makeText(context, "Notification permission is required for reminders", Toast.LENGTH_SHORT).show()
+        else Toast.makeText(context, context.getString(R.string.notification_permission_required), Toast.LENGTH_SHORT).show()
     }
 
     val excelExportLauncher = rememberLauncherForActivityResult(
@@ -217,13 +219,13 @@ fun SettingsScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is SettingsEvent.ExportSuccess -> {
-                    Toast.makeText(context, "${event.type} exported successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.message_export_success, event.type), Toast.LENGTH_SHORT).show()
                 }
                 is SettingsEvent.BackupSuccess -> {
-                    Toast.makeText(context, "Backup created successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.message_backup_success), Toast.LENGTH_SHORT).show()
                 }
                 is SettingsEvent.RestoreSuccess -> {
-                    Toast.makeText(context, "Data restored successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.message_restore_success), Toast.LENGTH_SHORT).show()
                 }
                 is SettingsEvent.ShowPremiumRequired -> {
                     onShowPremium()
@@ -257,11 +259,11 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     if (onNavigateBack != null) {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.settings_back))
                         }
                     }
                 }
@@ -288,19 +290,19 @@ fun SettingsScreen(
                     item {
                         PremiumBanner(onClick = {
                             viewModel.setPremium(true)
-                            Toast.makeText(context, "Premium activated! All features unlocked.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.message_premium_activated), Toast.LENGTH_SHORT).show()
                         })
                     }
                 }
 
                 // Appearance Section
                 item {
-                    SettingsSectionHeader("Appearance")
+                    SettingsSectionHeader(stringResource(R.string.section_appearance))
                 }
 
                 item {
                     ListItem(
-                        headlineContent = { Text("Theme") },
+                        headlineContent = { Text(stringResource(R.string.setting_theme)) },
                         leadingContent = {
                             Icon(
                                 Icons.Default.DarkMode,
@@ -330,9 +332,9 @@ fun SettingsScreen(
                                     ) {
                                         Text(
                                             text = when (mode) {
-                                                ThemeMode.SYSTEM -> "Auto"
-                                                ThemeMode.LIGHT -> "Light"
-                                                ThemeMode.DARK -> "Dark"
+                                                ThemeMode.SYSTEM -> stringResource(R.string.theme_auto)
+                                                ThemeMode.LIGHT -> stringResource(R.string.theme_light)
+                                                ThemeMode.DARK -> stringResource(R.string.theme_dark)
                                             },
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
@@ -349,7 +351,7 @@ fun SettingsScreen(
                 item {
                     SettingsItem(
                         icon = Icons.Default.AttachMoney,
-                        title = "Currency",
+                        title = stringResource(R.string.setting_currency),
                         subtitle = userPreferences.currency,
                         onClick = { viewModel.showCurrencyPicker() }
                     )
@@ -358,10 +360,10 @@ fun SettingsScreen(
                 item {
                     SettingsItem(
                         icon = Icons.Default.AttachMoney,
-                        title = "Currency Sign Position",
+                        title = stringResource(R.string.setting_currency_position),
                         subtitle = run {
                             val sign = com.moneytracker.simplebudget.ui.components.getCurrencySymbol(userPreferences.currency)
-                            if (userPreferences.currencySymbolAfter) "After amount (100$sign)" else "Before amount (${sign}100)"
+                            if (userPreferences.currencySymbolAfter) stringResource(R.string.currency_position_after, sign) else stringResource(R.string.currency_position_before, sign)
                         },
                         onClick = { viewModel.setCurrencySymbolAfter(!userPreferences.currencySymbolAfter) }
                     )
@@ -370,7 +372,7 @@ fun SettingsScreen(
                 item {
                     SettingsItem(
                         icon = Icons.Default.Language,
-                        title = "Language",
+                        title = stringResource(R.string.setting_language),
                         subtitle = currentLanguageName,
                         onClick = { showLanguageDialog = true }
                     )
@@ -378,17 +380,17 @@ fun SettingsScreen(
 
                 // Notifications Section
                 item {
-                    SettingsSectionHeader("Notifications")
+                    SettingsSectionHeader(stringResource(R.string.section_notifications))
                 }
 
                 item {
                     SettingsSwitch(
                         icon = Icons.Default.Notifications,
-                        title = "Transaction Reminders",
+                        title = stringResource(R.string.setting_transaction_reminders),
                         subtitle = if (reminderSettings.enabled)
-                            "Tap below to configure schedule"
+                            stringResource(R.string.reminder_enabled_subtitle)
                         else
-                            "Get reminded to log your transactions",
+                            stringResource(R.string.reminder_disabled_subtitle),
                         checked = reminderSettings.enabled,
                         onCheckedChange = { enabled ->
                             if (enabled) {
@@ -417,7 +419,7 @@ fun SettingsScreen(
                     item {
                         SettingsItem(
                             icon = Icons.Default.Schedule,
-                            title = "Remind at",
+                            title = stringResource(R.string.setting_remind_at),
                             subtitle = "%02d:%02d".format(reminderSettings.hour, reminderSettings.minute),
                             onClick = { showReminderTimePicker = true }
                         )
@@ -427,9 +429,10 @@ fun SettingsScreen(
                         item {
                             SettingsItem(
                                 icon = Icons.Default.DateRange,
-                                title = "Day of week",
+                                title = stringResource(R.string.setting_day_of_week),
                                 subtitle = DayOfWeek.of(reminderSettings.dayOfWeek)
-                                    .getDisplayName(TextStyle.FULL, Locale.ENGLISH),
+                                    .getDisplayName(TextStyle.FULL, Locale.getDefault())
+                                    .replaceFirstChar { it.titlecase(Locale.getDefault()) },
                                 onClick = { showReminderDayOfWeekPicker = true }
                             )
                         }
@@ -439,7 +442,7 @@ fun SettingsScreen(
                         item {
                             SettingsItem(
                                 icon = Icons.Default.CalendarMonth,
-                                title = "Day of month",
+                                title = stringResource(R.string.setting_day_of_month),
                                 subtitle = reminderSettings.monthlyOption.label,
                                 onClick = { showReminderDayOfMonthPicker = true }
                             )
@@ -451,11 +454,11 @@ fun SettingsScreen(
                     if (userPreferences.isPremium) {
                         SettingsSwitch(
                             icon = Icons.Default.Backup,
-                            title = "Backup Reminders",
+                            title = stringResource(R.string.setting_backup_reminders),
                             subtitle = if (backupReminderSettings.enabled)
-                                "Tap below to configure schedule"
+                                stringResource(R.string.reminder_enabled_subtitle)
                             else
-                                "Get reminded to back up your data",
+                                stringResource(R.string.backup_reminder_disabled_subtitle),
                             checked = backupReminderSettings.enabled,
                             onCheckedChange = { enabled ->
                                 if (enabled) {
@@ -472,8 +475,8 @@ fun SettingsScreen(
                     } else {
                         SettingsItem(
                             icon = Icons.Default.Backup,
-                            title = "Backup Reminders",
-                            subtitle = "Premium feature",
+                            title = stringResource(R.string.setting_backup_reminders),
+                            subtitle = stringResource(R.string.label_premium_feature),
                             onClick = onShowPremium,
                             isPremium = true
                         )
@@ -493,7 +496,7 @@ fun SettingsScreen(
                     item {
                         SettingsItem(
                             icon = Icons.Default.Schedule,
-                            title = "Remind at",
+                            title = stringResource(R.string.setting_remind_at),
                             subtitle = "%02d:%02d".format(backupReminderSettings.hour, backupReminderSettings.minute),
                             onClick = { showBackupReminderTimePicker = true }
                         )
@@ -503,9 +506,10 @@ fun SettingsScreen(
                         item {
                             SettingsItem(
                                 icon = Icons.Default.DateRange,
-                                title = "Day of week",
+                                title = stringResource(R.string.setting_day_of_week),
                                 subtitle = java.time.DayOfWeek.of(backupReminderSettings.dayOfWeek)
-                                    .getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH),
+                                    .getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault())
+                                    .replaceFirstChar { it.titlecase(Locale.getDefault()) },
                                 onClick = { showBackupReminderDayOfWeekPicker = true }
                             )
                         }
@@ -515,7 +519,7 @@ fun SettingsScreen(
                         item {
                             SettingsItem(
                                 icon = Icons.Default.CalendarMonth,
-                                title = "Day of month",
+                                title = stringResource(R.string.setting_day_of_month),
                                 subtitle = backupReminderSettings.monthlyOption.label,
                                 onClick = { showBackupReminderDayOfMonthPicker = true }
                             )
@@ -525,30 +529,32 @@ fun SettingsScreen(
 
                 // Data Section
                 item {
-                    SettingsSectionHeader("Data")
+                    SettingsSectionHeader(stringResource(R.string.section_data))
                 }
 
                 item {
+                    val excelTitle = stringResource(R.string.dialog_export_excel_title)
                     SettingsItem(
                         icon = Icons.Default.GridOn,
-                        title = "Export to Excel",
-                        subtitle = "Export data to Excel",
+                        title = stringResource(R.string.setting_export_excel),
+                        subtitle = stringResource(R.string.setting_export_excel_subtitle),
                         onClick = {
                             pendingAction = PendingExportAction.EXCEL
-                            periodDialogTitle = "Export to Excel"
+                            periodDialogTitle = excelTitle
                             showPeriodDialog = true
                         }
                     )
                 }
 
                 item {
+                    val pdfTitle = stringResource(R.string.dialog_export_pdf_title)
                     SettingsItem(
                         icon = Icons.Default.PictureAsPdf,
-                        title = "Export to PDF",
-                        subtitle = "Generate data report",
+                        title = stringResource(R.string.setting_export_pdf),
+                        subtitle = stringResource(R.string.setting_export_pdf_subtitle),
                         onClick = {
                             pendingAction = PendingExportAction.PDF
-                            periodDialogTitle = "Export to PDF"
+                            periodDialogTitle = pdfTitle
                             showPeriodDialog = true
                         }
                     )
@@ -573,13 +579,14 @@ fun SettingsScreen(
                 //     )
                 // }
                 item {
+                    val backupTitle = stringResource(R.string.dialog_backup_title)
                     SettingsItem(
                         icon = Icons.Default.Backup,
-                        title = "Backup",
-                        subtitle = "Create data backup (JSON)",
+                        title = stringResource(R.string.setting_backup),
+                        subtitle = stringResource(R.string.setting_backup_subtitle),
                         onClick = {
                             pendingAction = PendingExportAction.BACKUP
-                            periodDialogTitle = "Backup Data"
+                            periodDialogTitle = backupTitle
                             showPeriodDialog = true
                         }
                     )
@@ -604,8 +611,8 @@ fun SettingsScreen(
                 item {
                     SettingsItem(
                         icon = Icons.Default.Restore,
-                        title = "Restore",
-                        subtitle = "Restore from backup (JSON)",
+                        title = stringResource(R.string.setting_restore),
+                        subtitle = stringResource(R.string.setting_restore_subtitle),
                         onClick = {
                             showRestoreConfirmDialog = true
                         }
@@ -614,14 +621,14 @@ fun SettingsScreen(
 
                 // About Section
                 item {
-                    SettingsSectionHeader("About")
+                    SettingsSectionHeader(stringResource(R.string.section_about))
                 }
 
                 item {
                     SettingsItem(
                         icon = Icons.Default.Info,
-                        title = "About",
-                        subtitle = "Version 3.0.0",
+                        title = stringResource(R.string.setting_about),
+                        subtitle = stringResource(R.string.about_version),
                         onClick = { showAboutDialog = true }
                     )
                 }
@@ -666,11 +673,9 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showRestoreConfirmDialog = false },
             icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Restore Data") },
+            title = { Text(stringResource(R.string.dialog_restore_title)) },
             text = {
-                Text(
-                    "This will permanently delete all your current data including transactions, categories, subcategories, and accounts, and replace it with the data from the backup file.\n\nThis action cannot be undone. Are you sure you want to continue?"
-                )
+                Text(stringResource(R.string.dialog_restore_warning))
             },
             confirmButton = {
                 TextButton(
@@ -682,12 +687,12 @@ fun SettingsScreen(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Restore")
+                    Text(stringResource(R.string.button_restore))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRestoreConfirmDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.button_cancel))
                 }
             }
         )
@@ -706,7 +711,7 @@ fun SettingsScreen(
             },
             title = {
                 Text(
-                    text = "Money Tracker - Simple Budget",
+                    text = stringResource(R.string.about_app_name),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -718,18 +723,18 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Version 3.0.0",
+                        text = stringResource(R.string.about_version),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "\u00A9 ${java.time.Year.now().value} Money Tracker - Simple Budget",
+                        text = "\u00A9 ${java.time.Year.now().value} ${stringResource(R.string.about_app_name)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Privacy Policy",
+                        text = stringResource(R.string.about_privacy_policy),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable {
@@ -761,12 +766,12 @@ fun SettingsScreen(
                         }
                     }
                 ) {
-                    Text("Rate App")
+                    Text(stringResource(R.string.about_rate_app))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
-                    Text("Close")
+                    Text(stringResource(R.string.button_close))
                 }
             }
         )
@@ -783,7 +788,7 @@ fun SettingsScreen(
                     tint = MaterialTheme.colorScheme.primary
                 )
             },
-            title = { Text("Language") },
+            title = { Text(stringResource(R.string.dialog_language_title)) },
             text = {
                 LazyColumn {
                     items(LanguagePreferences.supportedLanguages) { lang ->
@@ -809,7 +814,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showLanguageDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.button_cancel))
                 }
             }
         )
@@ -904,9 +909,9 @@ fun SettingsScreen(
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     Text(
                         text = when {
-                            uiState.isExporting -> "Exporting..."
-                            uiState.isBackingUp -> "Creating backup..."
-                            else -> "Restoring..."
+                            uiState.isExporting -> stringResource(R.string.loading_exporting)
+                            uiState.isBackingUp -> stringResource(R.string.loading_creating_backup)
+                            else -> stringResource(R.string.loading_restoring)
                         }
                     )
                 }
@@ -939,12 +944,12 @@ fun PremiumBanner(onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Upgrade to Premium",
+                    text = stringResource(R.string.premium_banner_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Unlock all features with a one-time purchase",
+                    text = stringResource(R.string.premium_banner_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
@@ -1117,13 +1122,13 @@ fun CurrencyPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Currency") },
+        title = { Text(stringResource(R.string.dialog_select_currency)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search currency...") },
+                    placeholder = { Text(stringResource(R.string.currency_search_hint)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -1150,7 +1155,7 @@ fun CurrencyPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.button_cancel))
             }
         }
     )
@@ -1180,9 +1185,9 @@ fun ReminderFrequencyRow(
             ) {
                 Text(
                     text = when (freq) {
-                        ReminderFrequency.DAILY   -> "Daily"
-                        ReminderFrequency.WEEKLY  -> "Weekly"
-                        ReminderFrequency.MONTHLY -> "Monthly"
+                        ReminderFrequency.DAILY   -> stringResource(R.string.reminder_daily)
+                        ReminderFrequency.WEEKLY  -> stringResource(R.string.reminder_weekly)
+                        ReminderFrequency.MONTHLY -> stringResource(R.string.reminder_monthly)
                     },
                     modifier = Modifier.padding(vertical = 10.dp),
                     textAlign = TextAlign.Center,
@@ -1257,10 +1262,10 @@ fun ReminderTimePickerDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.button_cancel)) }
                     Spacer(Modifier.width(8.dp))
                     TextButton(onClick = { onConfirm(selectedHour, selectedMinute) }) {
-                        Text("OK")
+                        Text(stringResource(R.string.button_ok))
                     }
                 }
             }
@@ -1486,7 +1491,7 @@ fun ReminderDayOfWeekDialog(
     var current by remember { mutableStateOf(selected) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Day of week") },
+        title = { Text(stringResource(R.string.setting_day_of_week)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 (1..7).forEach { day ->
@@ -1501,7 +1506,8 @@ fun ReminderDayOfWeekDialog(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = DayOfWeek.of(day).getDisplayName(TextStyle.FULL, Locale.ENGLISH),
+                            text = DayOfWeek.of(day).getDisplayName(TextStyle.FULL, Locale.getDefault())
+                                .replaceFirstChar { it.titlecase(Locale.getDefault()) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             color = if (isSelected) MaterialTheme.colorScheme.onPrimary
@@ -1512,10 +1518,10 @@ fun ReminderDayOfWeekDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(current) }) { Text("OK") }
+            TextButton(onClick = { onConfirm(current) }) { Text(stringResource(R.string.button_ok)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.button_cancel)) }
         }
     )
 }
@@ -1529,7 +1535,7 @@ fun ReminderDayOfMonthDialog(
     var current by remember { mutableStateOf(selected) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Day of month") },
+        title = { Text(stringResource(R.string.setting_day_of_month)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 MonthlyReminderOption.entries.forEach { option ->
@@ -1556,10 +1562,10 @@ fun ReminderDayOfMonthDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(current) }) { Text("OK") }
+            TextButton(onClick = { onConfirm(current) }) { Text(stringResource(R.string.button_ok)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.button_cancel)) }
         }
     )
 }

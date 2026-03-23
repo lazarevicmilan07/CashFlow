@@ -80,7 +80,12 @@
       "Bash(grep:*)",
       "Read(//c/Users/MilanLazarevic/.gradle/jdks//**)",
       "Read(//c/ComData/Projekti/MoneyTracker/$LOCALAPPDATA/**)",
-      "Bash(cmd /c \"cd /d C:\\\\ComData\\\\Projekti\\\\MoneyTracker && gradlew.bat assembleDebug\" 2>&1; echo \"Exit: $?\")"
+      "Bash(cmd /c \"cd /d C:\\\\ComData\\\\Projekti\\\\MoneyTracker && gradlew.bat assembleDebug\" 2>&1; echo \"Exit: $?\")",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//c/ComData/Projekti/CashFlow/app/src/main/java/com/moneytracker/simplebudget/ui/reports/**)",
+      "Bash(done)",
+      "Bash(sed:*)"
     ]
   }
 }

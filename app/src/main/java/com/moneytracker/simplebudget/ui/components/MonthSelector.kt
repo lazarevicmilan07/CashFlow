@@ -27,11 +27,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.moneytracker.simplebudget.R
+import java.time.Month
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
@@ -41,7 +45,7 @@ fun MonthSelector(
     onNextMonth: () -> Unit,
     onMonthClick: () -> Unit = {}
 ) {
-    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
+    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -53,7 +57,7 @@ fun MonthSelector(
         }
 
         Text(
-            text = selectedMonth.format(formatter),
+            text = selectedMonth.format(formatter).replaceFirstChar { it.titlecase(Locale.getDefault()) },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.clickable(onClick = onMonthClick)
@@ -76,7 +80,7 @@ fun MonthYearPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Month and Year", style = MaterialTheme.typography.titleMedium) },
+        title = { Text(stringResource(R.string.period_select_month_year), style = MaterialTheme.typography.titleMedium) },
         text = {
             Column {
                 // Year selector
@@ -100,12 +104,10 @@ fun MonthYearPickerDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Month grid
-                val months = listOf(
-                    "Jan", "Feb", "Mar", "Apr",
-                    "May", "Jun", "Jul", "Aug",
-                    "Sep", "Oct", "Nov", "Dec"
-                )
+                // Month grid — names derived from current locale
+                val months = remember(Locale.getDefault()) {
+                    (1..12).map { Month.of(it).getDisplayName(TextStyle.SHORT, Locale.getDefault()).replaceFirstChar { c -> c.titlecase(Locale.getDefault()) } }
+                }
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     for (row in 0..2) {
@@ -144,12 +146,12 @@ fun MonthYearPickerDialog(
             TextButton(onClick = {
                 onMonthSelected(YearMonth.of(selectedYear, selectedMonthValue))
             }) {
-                Text("OK")
+                Text(stringResource(R.string.button_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.button_cancel))
             }
         }
     )

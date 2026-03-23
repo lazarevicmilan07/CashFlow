@@ -94,8 +94,10 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.moneytracker.simplebudget.R
 import com.moneytracker.simplebudget.domain.model.Account
 import com.moneytracker.simplebudget.domain.model.Category
 import com.moneytracker.simplebudget.domain.model.TransactionType
@@ -184,8 +186,8 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    if (isMultiSelectMode) Text("${selectedTransactionIds.size} selected")
-                    else Text("Transactions")
+                    if (isMultiSelectMode) Text(stringResource(R.string.dashboard_selected_count, selectedTransactionIds.size))
+                    else Text(stringResource(R.string.dashboard_title))
                 },
                 actions = {
                     if (isMultiSelectMode) {
@@ -323,9 +325,9 @@ fun DashboardScreen(
                                 tint = MaterialTheme.colorScheme.error
                             )
                         },
-                        title = { Text("Delete Transactions") },
+                        title = { Text(stringResource(R.string.dashboard_delete_transactions)) },
                         text = {
-                            Text("Delete ${selectedTransactionIds.size} selected transaction(s)? This cannot be undone.")
+                            Text(stringResource(R.string.dashboard_delete_confirm, selectedTransactionIds.size))
                         },
                         confirmButton = {
                             TextButton(
@@ -336,11 +338,11 @@ fun DashboardScreen(
                                 colors = ButtonDefaults.textButtonColors(
                                     contentColor = MaterialTheme.colorScheme.error
                                 )
-                            ) { Text("Delete") }
+                            ) { Text(stringResource(R.string.button_delete)) }
                         },
                         dismissButton = {
                             TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                                Text("Cancel")
+                                Text(stringResource(R.string.button_cancel))
                             }
                         }
                     )
@@ -349,7 +351,7 @@ fun DashboardScreen(
                 if (showBulkEditTypeDialog) {
                     AlertDialog(
                         onDismissRequest = { showBulkEditTypeDialog = false },
-                        title = { Text("Edit ${selectedTransactionIds.size} Transaction(s)") },
+                        title = { Text(stringResource(R.string.dashboard_edit_transactions, selectedTransactionIds.size)) },
                         text = {
                             Column {
                                 listOf(
@@ -381,7 +383,7 @@ fun DashboardScreen(
                         },
                         confirmButton = {
                             TextButton(onClick = { showBulkEditTypeDialog = false }) {
-                                Text("Cancel")
+                                Text(stringResource(R.string.button_cancel))
                             }
                         }
                     )
@@ -404,10 +406,10 @@ fun DashboardScreen(
                                     }
                                     showBulkDatePicker = false
                                 }
-                            ) { Text("OK") }
+                            ) { Text(stringResource(R.string.button_ok)) }
                         },
                         dismissButton = {
-                            TextButton(onClick = { showBulkDatePicker = false }) { Text("Cancel") }
+                            TextButton(onClick = { showBulkDatePicker = false }) { Text(stringResource(R.string.button_cancel)) }
                         }
                     ) {
                         DatePicker(state = datePickerState)
@@ -440,12 +442,12 @@ fun DashboardScreen(
                     var noteInput by remember { mutableStateOf("") }
                     AlertDialog(
                         onDismissRequest = { showBulkNoteDialog = false },
-                        title = { Text("Edit Note") },
+                        title = { Text(stringResource(R.string.dashboard_edit_note)) },
                         text = {
                             OutlinedTextField(
                                 value = noteInput,
                                 onValueChange = { noteInput = it },
-                                placeholder = { Text("Enter note for all selected transactions") },
+                                placeholder = { Text(stringResource(R.string.dashboard_note_placeholder)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 maxLines = 3
                             )
@@ -456,10 +458,10 @@ fun DashboardScreen(
                                     viewModel.bulkUpdateNote(noteInput)
                                     showBulkNoteDialog = false
                                 }
-                            ) { Text("Apply") }
+                            ) { Text(stringResource(R.string.button_apply)) }
                         },
                         dismissButton = {
-                            TextButton(onClick = { showBulkNoteDialog = false }) { Text("Cancel") }
+                            TextButton(onClick = { showBulkNoteDialog = false }) { Text(stringResource(R.string.button_cancel)) }
                         }
                     )
                 }
@@ -523,7 +525,7 @@ fun DashboardScreen(
                             // Filter status
                             if (filter.isActive && filteredTransactions.isNotEmpty()) {
                                 Text(
-                                    text = "Showing ${filteredTransactions.size} of ${uiState.recentTransactions.size} transactions",
+                                    text = stringResource(R.string.dashboard_showing_count, filteredTransactions.size, uiState.recentTransactions.size),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                     modifier = Modifier.padding(bottom = 4.dp)
@@ -538,7 +540,8 @@ fun DashboardScreen(
 
                                 groupedByDate.forEach { (date, transactions) ->
                                     Text(
-                                        text = date.format(DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.ENGLISH)),
+                                        text = date.format(DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.getDefault()))
+                                            .replaceFirstChar { it.titlecase(Locale.getDefault()) },
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                         modifier = Modifier.padding(top = 2.dp, bottom = 2.dp)
@@ -585,7 +588,7 @@ fun ExpenseBreakdownCard(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Expense Breakdown",
+                text = stringResource(R.string.dashboard_expense_breakdown),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -621,7 +624,7 @@ fun ExpenseBreakdownCard(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = item.category?.name ?: "Uncategorized",
+                        text = item.category?.name ?: stringResource(R.string.transaction_uncategorized),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.weight(1f)
                     )
@@ -721,7 +724,7 @@ fun SimplePieChart(
         if (selectedIndex in breakdown.indices) {
             val item = breakdown[selectedIndex]
             Text(
-                text = "${item.category?.name ?: "Uncategorized"}: ${formatCurrency(item.amount, currency, symbolAfter)} (${item.percentage.toInt()}%)",
+                text = "${item.category?.name ?: stringResource(R.string.transaction_uncategorized)}: ${formatCurrency(item.amount, currency, symbolAfter)} (${item.percentage.toInt()}%)",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -800,7 +803,7 @@ fun CompactTransactionItem(
                 verticalArrangement = if (hasSubcategory && !isTransfer) Arrangement.Top else Arrangement.Center
             ) {
                 Text(
-                    text = if (isTransfer) "Transfer" else (transaction.category?.name ?: "Uncategorized"),
+                    text = if (isTransfer) stringResource(R.string.transaction_type_transfer) else (transaction.category?.name ?: stringResource(R.string.transaction_uncategorized)),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -887,12 +890,12 @@ fun EmptyState() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "No transactions yet",
+            text = stringResource(R.string.dashboard_no_transactions),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
         Text(
-            text = "Tap + to add your first transaction",
+            text = stringResource(R.string.dashboard_no_transactions_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
         )
@@ -915,13 +918,13 @@ fun FilteredEmptyState(onClearFilters: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "No transactions match your filters",
+            text = stringResource(R.string.dashboard_no_transactions_filtered),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
         Spacer(modifier = Modifier.height(8.dp))
         TextButton(onClick = onClearFilters) {
-            Text("Clear filters")
+            Text(stringResource(R.string.dashboard_clear_filters))
         }
     }
 }
@@ -960,12 +963,12 @@ private fun FilterBottomSheet(
                 .imePadding(),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text("Filters", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.dashboard_filters), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // Transaction type
-            Text("Type", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            Text(stringResource(R.string.label_type), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             Row(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -973,33 +976,33 @@ private fun FilterBottomSheet(
                 FilterChip(
                     selected = filter.transactionType == null,
                     onClick = { onTypeFilter(null) },
-                    label = { Text("All") }
+                    label = { Text(stringResource(R.string.dashboard_filter_all)) }
                 )
                 FilterChip(
                     selected = filter.transactionType == TransactionType.EXPENSE,
                     onClick = { onTypeFilter(if (filter.transactionType == TransactionType.EXPENSE) null else TransactionType.EXPENSE) },
-                    label = { Text("Expense") }
+                    label = { Text(stringResource(R.string.dashboard_filter_expense)) }
                 )
                 FilterChip(
                     selected = filter.transactionType == TransactionType.INCOME,
                     onClick = { onTypeFilter(if (filter.transactionType == TransactionType.INCOME) null else TransactionType.INCOME) },
-                    label = { Text("Income") }
+                    label = { Text(stringResource(R.string.dashboard_filter_income)) }
                 )
                 FilterChip(
                     selected = filter.transactionType == TransactionType.TRANSFER,
                     onClick = { onTypeFilter(if (filter.transactionType == TransactionType.TRANSFER) null else TransactionType.TRANSFER) },
-                    label = { Text("Transfer") }
+                    label = { Text(stringResource(R.string.dashboard_filter_transfer)) }
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // Category
-            Text("Category", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            Text(stringResource(R.string.dashboard_filter_category), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             FlowChipsRow(
                 items = parentCategories,
                 selectedId = filter.categoryId,
-                allLabel = "All",
+                allLabel = stringResource(R.string.dashboard_filter_all),
                 nameSelector = { it.name },
                 idSelector = { it.id },
                 onSelected = { onCategoryFilter(it) }
@@ -1008,11 +1011,11 @@ private fun FilterBottomSheet(
             // Subcategory
             if (filter.categoryId != null && subcategories.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Subcategory", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Text(stringResource(R.string.dashboard_filter_subcategory), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                 FlowChipsRow(
                     items = subcategories,
                     selectedId = filter.subcategoryId,
-                    allLabel = "All",
+                    allLabel = stringResource(R.string.dashboard_filter_all),
                     nameSelector = { it.name },
                     idSelector = { it.id },
                     onSelected = { onSubcategoryFilter(it) }
@@ -1022,11 +1025,11 @@ private fun FilterBottomSheet(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Account
-            Text("Account", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            Text(stringResource(R.string.dashboard_filter_account), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             FlowChipsRow(
                 items = accounts,
                 selectedId = filter.accountId,
-                allLabel = "All",
+                allLabel = stringResource(R.string.dashboard_filter_all),
                 nameSelector = { it.name },
                 idSelector = { it.id },
                 onSelected = { onAccountFilter(it) }
@@ -1035,11 +1038,11 @@ private fun FilterBottomSheet(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Search
-            Text("Search", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            Text(stringResource(R.string.dashboard_search), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             OutlinedTextField(
                 value = filter.searchQuery,
                 onValueChange = onSearchQuery,
-                placeholder = { Text("Search notes...") },
+                placeholder = { Text(stringResource(R.string.dashboard_search_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 trailingIcon = {
@@ -1057,10 +1060,10 @@ private fun FilterBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
             ) {
                 TextButton(onClick = { onClearFilters() }) {
-                    Text("Clear")
+                    Text(stringResource(R.string.button_clear))
                 }
                 TextButton(onClick = onDismiss) {
-                    Text("Done")
+                    Text(stringResource(R.string.button_done))
                 }
             }
         }
@@ -1095,7 +1098,7 @@ private fun BulkCategoryPickerSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Select Category", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.dashboard_select_category), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -1153,11 +1156,11 @@ private fun BulkCategoryPickerSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
             ) {
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.button_cancel)) }
                 TextButton(
                     onClick = { onConfirm(selectedParentId, selectedSubcategoryId) },
                     enabled = selectedParentId != null
-                ) { Text("Apply") }
+                ) { Text(stringResource(R.string.button_apply)) }
             }
         }
     }
@@ -1186,7 +1189,7 @@ private fun BulkAccountPickerSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Select Account", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.dashboard_select_account), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -1228,7 +1231,7 @@ private fun BulkAccountPickerSheet(
             }
 
             TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
-                Text("Cancel")
+                Text(stringResource(R.string.button_cancel))
             }
         }
     }

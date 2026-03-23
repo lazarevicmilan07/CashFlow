@@ -81,7 +81,7 @@ class ExportUseCase @Inject constructor(
             val accountsMap = accounts.associateBy { it.id }
 
             context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                Workbook(outputStream, "MoneyTracker", "1.0").use { workbook ->
+                Workbook(outputStream, "CashFlow", "1.0").use { workbook ->
                     val sheet = workbook.newWorksheet("Expenses")
 
                     // Header row

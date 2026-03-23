@@ -57,7 +57,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.moneytracker.simplebudget.R
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -93,10 +95,10 @@ fun AccountsScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is AccountEvent.AccountSaved -> {
-                    Toast.makeText(context, "Account saved", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.accounts_saved), Toast.LENGTH_SHORT).show()
                 }
                 is AccountEvent.AccountDeleted -> {
-                    Toast.makeText(context, "Account deleted", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.accounts_deleted), Toast.LENGTH_SHORT).show()
                 }
                 is AccountEvent.ShowError -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
@@ -108,7 +110,7 @@ fun AccountsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Accounts") },
+                title = { Text(stringResource(R.string.accounts_title)) },
                 navigationIcon = {
                     if (onNavigateBack != null) {
                         IconButton(onClick = onNavigateBack) {
@@ -118,7 +120,7 @@ fun AccountsScreen(
                 },
                 actions = {
                     IconButton(onClick = { viewModel.showAddDialog() }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Account")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.accounts_add))
                     }
                 }
             )
@@ -146,7 +148,7 @@ fun AccountsScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Your Accounts",
+                        text = stringResource(R.string.accounts_your_accounts),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -197,7 +199,7 @@ fun AccountsScreen(
             onDismissRequest = { accountToDelete = null },
             title = { Text("Delete Account") },
             text = {
-                Text("Are you sure you want to delete \"${account.name}\"? All transactions in this account will become unassigned.")
+                Text(stringResource(R.string.accounts_delete_confirm, account.name))
             },
             confirmButton = {
                 TextButton(
@@ -210,12 +212,12 @@ fun AccountsScreen(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.button_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { accountToDelete = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.button_cancel))
                 }
             }
         )
@@ -243,7 +245,7 @@ fun TotalBalanceCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Total Balance",
+                text = stringResource(R.string.accounts_total_balance),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -289,7 +291,7 @@ fun TotalBalanceCard(
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "All Accounts",
+                    text = stringResource(R.string.accounts_all_accounts),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -341,7 +343,7 @@ fun AccountListItem(
                     if (account.isDefault) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Default",
+                            text = stringResource(R.string.accounts_default_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -370,7 +372,7 @@ fun AccountListItem(
             ) {
                 Icon(
                     imageVector = if (account.isDefault) Icons.Default.Star else Icons.Default.StarBorder,
-                    contentDescription = if (account.isDefault) "Remove default" else "Set as default",
+                    contentDescription = if (account.isDefault) stringResource(R.string.accounts_remove_default) else stringResource(R.string.accounts_set_default),
                     tint = if (account.isDefault) Color(0xFFFFC107) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                     modifier = Modifier.size(16.dp)
                 )
@@ -402,7 +404,7 @@ fun AccountDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(if (isEditing) "Edit Account" else "New Account")
+            Text(if (isEditing) stringResource(R.string.accounts_edit_title) else stringResource(R.string.accounts_new_title))
         },
         text = {
             Column(
@@ -425,7 +427,7 @@ fun AccountDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text("Account Name") },
+                    label = { Text(stringResource(R.string.accounts_field_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -439,7 +441,7 @@ fun AccountDialog(
                         value = AccountTypeNames[type] ?: type.name,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Account Type") },
+                        label = { Text(stringResource(R.string.accounts_field_type)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeDropdownExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -469,7 +471,7 @@ fun AccountDialog(
                             onInitialBalanceChange(value)
                         }
                     },
-                    label = { Text("Initial Balance") },
+                    label = { Text(stringResource(R.string.accounts_field_initial_balance)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -478,7 +480,7 @@ fun AccountDialog(
 
                 // Icon Selector
                 Text(
-                    text = "Icon",
+                    text = stringResource(R.string.label_icon),
                     style = MaterialTheme.typography.labelMedium
                 )
                 LazyRow(
@@ -515,7 +517,7 @@ fun AccountDialog(
 
                 // Color Selector
                 Text(
-                    text = "Color",
+                    text = stringResource(R.string.label_color),
                     style = MaterialTheme.typography.labelMedium
                 )
                 LazyRow(
@@ -556,7 +558,7 @@ fun AccountDialog(
                 onClick = onSave,
                 enabled = name.isNotBlank()
             ) {
-                Text("Save")
+                Text(stringResource(R.string.button_save))
             }
         },
         dismissButton = {
@@ -568,12 +570,12 @@ fun AccountDialog(
                             contentColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Delete")
+                        Text(stringResource(R.string.button_delete))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.button_cancel))
                 }
             }
         }

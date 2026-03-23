@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.MoneyTracker" parent="Theme.Material3.Dark.NoActionBar">
+    <style name="Theme.CashFlow" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@color/background_dark</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <style name="Theme.MoneyTracker.Splash" parent="Theme.SplashScreen">
+    <style name="Theme.CashFlow.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@android:color/black</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
         <item name="windowSplashScreenAnimationDuration">500</item>
-        <item name="postSplashScreenTheme">@style/Theme.MoneyTracker</item>
+        <item name="postSplashScreenTheme">@style/Theme.CashFlow</item>
     </style>
 </resources>

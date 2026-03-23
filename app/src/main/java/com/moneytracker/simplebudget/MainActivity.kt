@@ -82,13 +82,18 @@ import com.moneytracker.simplebudget.data.preferences.ThemeMode
 import com.moneytracker.simplebudget.navigation.NavGraph
 import com.moneytracker.simplebudget.navigation.Screen
 import com.moneytracker.simplebudget.ui.onboarding.OnboardingScreen
-import com.moneytracker.simplebudget.ui.theme.MoneyTrackerTheme
+import com.moneytracker.simplebudget.ui.theme.CashFlowTheme
 import com.moneytracker.simplebudget.util.LocaleHelper
 import kotlinx.coroutines.launch
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
 import javax.inject.Inject
@@ -143,6 +148,8 @@ class MainActivity : ComponentActivity() {
 
     private val openSettings = mutableStateOf(false)
 
+    private lateinit var appUpdateManager: AppUpdateManager
+
     override fun attachBaseContext(newBase: Context) {
         val lang = LanguagePreferences.getLanguage(newBase)
         super.attachBaseContext(LocaleHelper.wrapContext(newBase, lang))
@@ -158,8 +165,38 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        androidx.core.app.NotificationManagerCompat.from(this)
-            .cancel(com.moneytracker.simplebudget.notifications.ReminderNotificationHelper.NOTIFICATION_ID)
+        androidx.core.app.NotificationManagerCompat.from(this).apply {
+            cancel(com.moneytracker.simplebudget.notifications.ReminderNotificationHelper.NOTIFICATION_ID)
+            cancel(com.moneytracker.simplebudget.notifications.BackupReminderNotificationHelper.NOTIFICATION_ID)
+        }
+
+        // Resume a stalled immediate update (user backgrounded the update dialog and returned).
+        appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                appUpdateManager.startUpdateFlowForResult(
+                    appUpdateInfo,
+                    this,
+                    AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build(),
+                    0
+                )
+            }
+        }
+    }
+
+    private fun checkForAppUpdate() {
+        appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
+            if (
+                appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
+                appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) {
+                appUpdateManager.startUpdateFlowForResult(
+                    appUpdateInfo,
+                    this,
+                    AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build(),
+                    0
+                )
+            }
+        }
     }
 
     /** Handles re-delivery when the activity is already running (singleTop). */
@@ -234,6 +271,9 @@ class MainActivity : ComponentActivity() {
             openSettings.value = true
         }
 
+        appUpdateManager = AppUpdateManagerFactory.create(this)
+        checkForAppUpdate()
+
         // Initialize Google Mobile Ads SDK
         MobileAds.initialize(this) {}
 
@@ -256,7 +296,7 @@ class MainActivity : ComponentActivity() {
                 showOnboarding = true
             }
 
-            MoneyTrackerTheme(darkTheme = isDarkMode) {
+            CashFlowTheme(darkTheme = isDarkMode) {
                 if (showOnboarding) {
                     OnboardingScreen(
                         onFinish = {

@@ -35,9 +35,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.moneytracker.simplebudget.R
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.TextStyle
@@ -55,7 +57,8 @@ data class ExportPeriod(
     fun getFileName(prefix: String, extension: String): String {
         return when (type) {
             PeriodType.MONTH -> {
-                val monthName = Month.of(month!!).getDisplayName(TextStyle.SHORT, Locale.ENGLISH)
+                val monthName = Month.of(month!!).getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                    .replaceFirstChar { it.titlecase(Locale.getDefault()) }
                 "${prefix}_${monthName}_${year}.${extension}"
             }
             PeriodType.YEAR -> "${prefix}_${year}.${extension}"
@@ -65,7 +68,8 @@ data class ExportPeriod(
     fun getDisplayName(): String {
         return when (type) {
             PeriodType.MONTH -> {
-                val monthName = Month.of(month!!).getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                val monthName = Month.of(month!!).getDisplayName(TextStyle.FULL, Locale.getDefault())
+                    .replaceFirstChar { it.titlecase(Locale.getDefault()) }
                 "$monthName $year"
             }
             PeriodType.YEAR -> year.toString()
@@ -104,7 +108,7 @@ fun PeriodSelectionDialog(
                 Text(
                     text = when (step) {
                         1 -> title
-                        2 -> if (selectedType == PeriodType.MONTH) "Select Month and Year" else "Select Year"
+                        2 -> if (selectedType == PeriodType.MONTH) stringResource(R.string.period_select_month_year) else stringResource(R.string.period_select_year)
                         else -> title
                     },
                     style = if (step == 2) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall
@@ -119,7 +123,7 @@ fun PeriodSelectionDialog(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Select period for export:",
+                            text = stringResource(R.string.period_select_export),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -127,8 +131,8 @@ fun PeriodSelectionDialog(
 
                         PeriodTypeOption(
                             icon = Icons.Default.CalendarToday,
-                            title = "Monthly",
-                            description = "Export data for a specific month",
+                            title = stringResource(R.string.period_monthly),
+                            description = stringResource(R.string.period_monthly_description),
                             onClick = {
                                 selectedType = PeriodType.MONTH
                                 step = 2
@@ -137,8 +141,8 @@ fun PeriodSelectionDialog(
 
                         PeriodTypeOption(
                             icon = Icons.Default.CalendarMonth,
-                            title = "Yearly",
-                            description = "Export data for an entire year",
+                            title = stringResource(R.string.period_yearly),
+                            description = stringResource(R.string.period_yearly_description),
                             onClick = {
                                 selectedType = PeriodType.YEAR
                                 step = 2
@@ -178,13 +182,13 @@ fun PeriodSelectionDialog(
                         }
                     }
                 ) {
-                    Text("OK")
+                    Text(stringResource(R.string.button_ok))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.button_cancel))
             }
         }
     )

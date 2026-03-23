@@ -44,7 +44,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.moneytracker.simplebudget.R
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.moneytracker.simplebudget.domain.model.ExpenseWithCategory
@@ -75,7 +77,7 @@ fun TransactionDetailScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is TransactionDetailEvent.TransactionDeleted -> {
-                    Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.transaction_deleted), Toast.LENGTH_SHORT).show()
                     onNavigateBack()
                 }
                 is TransactionDetailEvent.ShowError -> {
@@ -88,7 +90,7 @@ fun TransactionDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Transaction Details") },
+                title = { Text(stringResource(R.string.transaction_detail_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -137,12 +139,17 @@ fun TransactionDetailScreen(
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
                 icon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                title = { Text("Delete Transaction") },
+                title = { Text(stringResource(R.string.transaction_detail_delete)) },
                 text = {
                     Text(
-                        "Are you sure you want to delete this ${
-                            if (txn.expense.type == TransactionType.EXPENSE) "expense" else "income"
-                        } of ${formatCurrency(txn.expense.amount, currency, symbolAfter)}?"
+                        stringResource(
+                            R.string.transaction_detail_delete_confirm,
+                            if (txn.expense.type == TransactionType.EXPENSE)
+                                stringResource(R.string.transaction_type_expense)
+                            else
+                                stringResource(R.string.transaction_type_income),
+                            formatCurrency(txn.expense.amount, currency, symbolAfter)
+                        )
                     )
                 },
                 confirmButton = {
@@ -155,12 +162,12 @@ fun TransactionDetailScreen(
                             contentColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Delete")
+                        Text(stringResource(R.string.button_delete))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteDialog = false }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.button_cancel))
                     }
                 }
             )
@@ -182,7 +189,7 @@ fun TransactionDetailContent(
         TransactionType.INCOME -> IncomeGreen
         TransactionType.TRANSFER -> TransferBlue
     }
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(Locale.ENGLISH)
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(Locale.getDefault())
 
     Column(
         modifier = modifier,
@@ -203,9 +210,9 @@ fun TransactionDetailContent(
             ) {
                 Text(
                     text = when (transaction.expense.type) {
-                        TransactionType.EXPENSE -> "Expense"
-                        TransactionType.INCOME -> "Income"
-                        TransactionType.TRANSFER -> "Transfer"
+                        TransactionType.EXPENSE -> stringResource(R.string.transaction_type_expense)
+                        TransactionType.INCOME -> stringResource(R.string.transaction_type_income)
+                        TransactionType.TRANSFER -> stringResource(R.string.transaction_type_transfer)
                     },
                     style = MaterialTheme.typography.labelLarge,
                     color = amountColor
@@ -233,8 +240,8 @@ fun TransactionDetailContent(
                 // Date
                 DetailRow(
                     icon = Icons.Default.CalendarToday,
-                    label = "Date",
-                    value = transaction.expense.date.format(dateFormatter)
+                    label = stringResource(R.string.label_date),
+                    value = transaction.expense.date.format(dateFormatter).replaceFirstChar { it.titlecase(Locale.getDefault()) }
                 )
 
                 HorizontalDivider()
@@ -244,14 +251,14 @@ fun TransactionDetailContent(
                     // From Account
                     DetailRow(
                         icon = Icons.Default.AccountBalance,
-                        label = "From",
+                        label = stringResource(R.string.transaction_detail_from),
                         value = transaction.account?.name ?: "Unknown"
                     )
                     HorizontalDivider()
                     // To Account
                     DetailRow(
                         icon = Icons.Default.AccountBalance,
-                        label = "To",
+                        label = stringResource(R.string.transaction_detail_to),
                         value = transaction.toAccount?.name ?: "Unknown"
                     )
                 } else {
@@ -268,7 +275,7 @@ fun TransactionDetailContent(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Category",
+                                text = stringResource(R.string.label_category),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -291,7 +298,7 @@ fun TransactionDetailContent(
                                         style = MaterialTheme.typography.bodyLarge
                                     )
                                 } ?: Text(
-                                    text = "Uncategorized",
+                                    text = stringResource(R.string.transaction_uncategorized),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -305,7 +312,7 @@ fun TransactionDetailContent(
                     HorizontalDivider()
                     DetailRow(
                         icon = Icons.AutoMirrored.Filled.Notes,
-                        label = "Note",
+                        label = stringResource(R.string.label_note),
                         value = transaction.expense.note
                     )
                 }

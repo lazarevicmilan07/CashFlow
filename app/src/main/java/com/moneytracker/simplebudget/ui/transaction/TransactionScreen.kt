@@ -79,7 +79,9 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.moneytracker.simplebudget.R
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -156,15 +158,15 @@ fun TransactionScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is TransactionEvent.TransactionSaved -> {
-                    Toast.makeText(context, "Transaction saved", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.transaction_saved), Toast.LENGTH_SHORT).show()
                     onNavigateBack()
                 }
                 is TransactionEvent.TransactionSavedAndContinue -> {
-                    Toast.makeText(context, "Transaction saved", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.transaction_saved), Toast.LENGTH_SHORT).show()
                     formAnimKey++
                 }
                 is TransactionEvent.TransactionDeleted -> {
-                    Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.transaction_deleted), Toast.LENGTH_SHORT).show()
                     onNavigateBack()
                 }
                 is TransactionEvent.ShowError -> {
@@ -209,7 +211,7 @@ fun TransactionScreen(
                     )
                 }
                 Text(
-                    text = if (uiState.isEditing) "Edit Transaction" else "New Transaction",
+                    text = if (uiState.isEditing) stringResource(R.string.transaction_edit_title) else stringResource(R.string.transaction_new_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -314,14 +316,14 @@ fun TransactionScreen(
         if (expenseId != null) {
             AlertDialog(
                 onDismissRequest = { showCopyDialog = false },
-                title = { Text("Copy Transaction") },
-                text = { Text("Which date should the copy use?") },
+                title = { Text(stringResource(R.string.transaction_copy_title)) },
+                text = { Text(stringResource(R.string.transaction_copy_date_question)) },
                 confirmButton = {
                     TextButton(onClick = {
                         showCopyDialog = false
                         onCopyTransaction(expenseId, true)
                     }) {
-                        Text("Today's Date")
+                        Text(stringResource(R.string.transaction_copy_today))
                     }
                 },
                 dismissButton = {
@@ -329,7 +331,7 @@ fun TransactionScreen(
                         showCopyDialog = false
                         onCopyTransaction(expenseId, false)
                     }) {
-                        Text("Original Date")
+                        Text(stringResource(R.string.transaction_copy_original))
                     }
                 }
             )
@@ -340,19 +342,19 @@ fun TransactionScreen(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             icon = { Icon(Icons.Default.Delete, contentDescription = null) },
-            title = { Text("Delete Transaction") },
-            text = { Text("Are you sure you want to delete this transaction?") },
+            title = { Text(stringResource(R.string.transaction_detail_delete)) },
+            text = { Text(stringResource(R.string.transaction_delete_confirm)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteTransaction()
                     showDeleteDialog = false
                 }) {
-                    Text("Delete")
+                    Text(stringResource(R.string.button_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.button_cancel))
                 }
             }
         )
@@ -494,14 +496,14 @@ fun TransactionFormFields(
     val selectedToAccount = accounts.find { it.id == uiState.toAccountId }
     val displayedCategory = (uiState.selectedCategoryId?.let { id -> allCategories.find { it.id == id } }
         ?: uiState.selectedParentCategoryId?.let { id -> allCategories.find { it.id == id } })
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.ENGLISH)
-    val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH)
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault())
+    val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEE", Locale.getDefault())
 
     Column {
         // Date Field
         FormFieldRow(
-            label = "Date",
-            value = "${uiState.selectedDate.format(dateFormatter)} (${uiState.selectedDate.format(dayOfWeekFormatter)})",
+            label = stringResource(R.string.label_date),
+            value = "${uiState.selectedDate.format(dateFormatter).replaceFirstChar { it.titlecase(Locale.getDefault()) }} (${uiState.selectedDate.format(dayOfWeekFormatter).replaceFirstChar { it.titlecase(Locale.getDefault()) }})",
             onClick = onDateClick,
             isActive = uiState.currentField == TransactionField.DATE,
             typeColor = typeColor
@@ -515,7 +517,7 @@ fun TransactionFormFields(
 
         // Account / From Field
         FormFieldRow(
-            label = if (uiState.transactionType == TransactionType.TRANSFER) "From" else "Account",
+            label = if (uiState.transactionType == TransactionType.TRANSFER) stringResource(R.string.transaction_detail_from) else stringResource(R.string.label_account),
             value = selectedAccount?.name ?: "",
             onClick = { viewModel.setCurrentField(TransactionField.ACCOUNT) },
             isActive = uiState.currentField == TransactionField.ACCOUNT,
@@ -532,7 +534,7 @@ fun TransactionFormFields(
 
         if (uiState.transactionType == TransactionType.TRANSFER) {
             FormFieldRow(
-                label = "To",
+                label = stringResource(R.string.transaction_detail_to),
                 value = selectedToAccount?.name ?: "",
                 onClick = { viewModel.setCurrentField(TransactionField.TO_ACCOUNT) },
                 isActive = uiState.currentField == TransactionField.TO_ACCOUNT,
@@ -542,7 +544,7 @@ fun TransactionFormFields(
             )
         } else {
             FormFieldRow(
-                label = "Category",
+                label = stringResource(R.string.label_category),
                 value = categoryDisplayText,
                 onClick = { viewModel.setCurrentField(TransactionField.CATEGORY) },
                 isActive = uiState.currentField == TransactionField.CATEGORY || uiState.currentField == TransactionField.SUBCATEGORY,
@@ -580,7 +582,7 @@ fun TransactionFormFields(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Note",
+                    text = stringResource(R.string.label_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isNoteActive) typeColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                     fontWeight = FontWeight.Medium
@@ -608,7 +610,7 @@ fun TransactionFormFields(
                             Box(contentAlignment = Alignment.CenterEnd) {
                                 if (uiState.note.isEmpty()) {
                                     Text(
-                                        text = "Add a note...",
+                                        text = stringResource(R.string.dashboard_note_placeholder),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f),
                                         textAlign = TextAlign.End
@@ -621,7 +623,7 @@ fun TransactionFormFields(
                 } else {
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = if (uiState.note.isNotEmpty()) uiState.note else "Add a note...",
+                        text = if (uiState.note.isNotEmpty()) uiState.note else stringResource(R.string.dashboard_note_placeholder),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (uiState.note.isNotEmpty()) MaterialTheme.colorScheme.onSurface
                                 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f),
@@ -967,7 +969,7 @@ fun CategorySelectionPanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Category",
+                text = stringResource(R.string.label_category),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -1144,7 +1146,7 @@ fun AmountInputPanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Amount",
+                text = stringResource(R.string.label_amount),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -1297,7 +1299,7 @@ fun SaveButtonsPanel(
             ) {
                 Icon(Icons.Default.ContentCopy, null, Modifier.size(16.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Copy", fontWeight = FontWeight.Medium, maxLines = 1)
+                Text(stringResource(R.string.button_copy), fontWeight = FontWeight.Medium, maxLines = 1)
             }
         }
 
@@ -1315,7 +1317,7 @@ fun SaveButtonsPanel(
             ) {
                 Icon(Icons.Outlined.DeleteOutline, null, Modifier.size(16.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Delete", fontWeight = FontWeight.Medium, maxLines = 1)
+                Text(stringResource(R.string.button_delete), fontWeight = FontWeight.Medium, maxLines = 1)
             }
         }
 
@@ -1332,7 +1334,7 @@ fun SaveButtonsPanel(
         ) {
             Icon(Icons.Outlined.Save, null, Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))
-            Text("Save", fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(stringResource(R.string.button_save), fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
 
         // Continue Button (new transactions only)
@@ -1349,7 +1351,7 @@ fun SaveButtonsPanel(
             ) {
                 Icon(Icons.Outlined.PlayCircleOutline, null, Modifier.size(16.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Continue", fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(stringResource(R.string.button_continue), fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
         }
     }
@@ -1381,12 +1383,12 @@ fun DatePickerDialog(
                     }
                 }
             ) {
-                Text("OK")
+                Text(stringResource(R.string.button_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.button_cancel))
             }
         }
     ) {

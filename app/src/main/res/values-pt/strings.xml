@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App -->
-    <string name="app_name">Money Tracker - Gerenciador de Gastos</string>
-    <string name="app_name_short">Money Tracker</string>
+    <string name="app_name">CashFlow - Gerenciador de Gastos</string>
+    <string name="app_name_short">CashFlow</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_transactions">Transações</string>
@@ -87,7 +87,7 @@
     <string name="section_about">Sobre</string>
     <string name="setting_about">Sobre</string>
     <string name="about_version">Versão 3.0.0</string>
-    <string name="about_app_name">Money Tracker - Orçamento Simples</string>
+    <string name="about_app_name">CashFlow - Orçamento Simples</string>
     <string name="about_privacy_policy">Política de privacidade</string>
     <string name="about_rate_app">Avaliar o app</string>
 
@@ -153,6 +153,8 @@
     <string name="dashboard_showing_count">Exibindo %1$d de %2$d transações</string>
 
     <!-- Transaction Screen -->
+    <string name="transaction_edit_title">Editar transação</string>
+    <string name="transaction_new_title">Nova transação</string>
     <string name="transaction_copy_title">Copiar transação</string>
     <string name="transaction_copy_date_question">Qual data a cópia deve usar?</string>
     <string name="transaction_copy_today">Data de hoje</string>

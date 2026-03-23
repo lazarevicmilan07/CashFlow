@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,10 +47,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.moneytracker.simplebudget.R
 import kotlinx.coroutines.launch
 
 data class OnboardingPage(
@@ -61,45 +64,63 @@ data class OnboardingPage(
     val secondaryColor: Color
 )
 
-private val pages = listOf(
-    OnboardingPage(
-        icon = Icons.Filled.Receipt,
-        title = "Track Your Money",
-        subtitle = "Effortless expense tracking",
-        description = "Log your daily expenses and income in seconds. Stay on top of your finances with a clean, intuitive interface designed for speed.",
-        accentColor = Color(0xFF1A73E8),
-        secondaryColor = Color(0xFF4FC3F7)
-    ),
-    OnboardingPage(
-        icon = Icons.Filled.Assessment,
-        title = "Smart Insights",
-        subtitle = "Monthly & yearly reports",
-        description = "Visualize your spending patterns with beautiful charts. Get monthly breakdowns and yearly overviews to understand where your money goes.",
-        accentColor = Color(0xFF4CAF50),
-        secondaryColor = Color(0xFF81C784)
-    ),
-    OnboardingPage(
-        icon = Icons.Filled.AccountBalance,
-        title = "Stay Organized",
-        subtitle = "Accounts & categories",
-        description = "Create multiple accounts and custom categories to organize your finances your way. Tag every transaction for a clear financial picture.",
-        accentColor = Color(0xFFFF9800),
-        secondaryColor = Color(0xFFFFCC02)
-    ),
-    OnboardingPage(
-        icon = Icons.Filled.CloudUpload,
-        title = "Your Data, Safe",
-        subtitle = "Export & backup",
-        description = "Export your records as Excel or PDF. Backup and restore your data anytime so you never lose track of your financial history.",
-        accentColor = Color(0xFF9C27B0),
-        secondaryColor = Color(0xFFCE93D8)
-    )
-)
+@Composable
+private fun rememberOnboardingPages(): List<OnboardingPage> {
+    val page1Title = stringResource(R.string.onboarding_page1_title)
+    val page1Subtitle = stringResource(R.string.onboarding_page1_subtitle)
+    val page1Description = stringResource(R.string.onboarding_page1_description)
+    val page2Title = stringResource(R.string.onboarding_page2_title)
+    val page2Subtitle = stringResource(R.string.onboarding_page2_subtitle)
+    val page2Description = stringResource(R.string.onboarding_page2_description)
+    val page3Title = stringResource(R.string.onboarding_page3_title)
+    val page3Subtitle = stringResource(R.string.onboarding_page3_subtitle)
+    val page3Description = stringResource(R.string.onboarding_page3_description)
+    val page4Title = stringResource(R.string.onboarding_page4_title)
+    val page4Subtitle = stringResource(R.string.onboarding_page4_subtitle)
+    val page4Description = stringResource(R.string.onboarding_page4_description)
+    return remember(page1Title, page2Title, page3Title, page4Title) {
+        listOf(
+            OnboardingPage(
+                icon = Icons.Filled.Receipt,
+                title = page1Title,
+                subtitle = page1Subtitle,
+                description = page1Description,
+                accentColor = Color(0xFF1A73E8),
+                secondaryColor = Color(0xFF4FC3F7)
+            ),
+            OnboardingPage(
+                icon = Icons.Filled.Assessment,
+                title = page2Title,
+                subtitle = page2Subtitle,
+                description = page2Description,
+                accentColor = Color(0xFF4CAF50),
+                secondaryColor = Color(0xFF81C784)
+            ),
+            OnboardingPage(
+                icon = Icons.Filled.AccountBalance,
+                title = page3Title,
+                subtitle = page3Subtitle,
+                description = page3Description,
+                accentColor = Color(0xFFFF9800),
+                secondaryColor = Color(0xFFFFCC02)
+            ),
+            OnboardingPage(
+                icon = Icons.Filled.CloudUpload,
+                title = page4Title,
+                subtitle = page4Subtitle,
+                description = page4Description,
+                accentColor = Color(0xFF9C27B0),
+                secondaryColor = Color(0xFFCE93D8)
+            )
+        )
+    }
+}
 
 @Composable
 fun OnboardingScreen(
     onFinish: () -> Unit
 ) {
+    val pages = rememberOnboardingPages()
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val scope = rememberCoroutineScope()
     val isLastPage = pagerState.currentPage == pages.size - 1
@@ -134,7 +155,7 @@ fun OnboardingScreen(
                     enabled = !isLastPage
                 ) {
                     Text(
-                        text = "Skip",
+                        text = stringResource(R.string.onboarding_skip),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 15.sp
                     )
@@ -219,7 +240,7 @@ fun OnboardingScreen(
                     )
                 ) {
                     Text(
-                        text = if (isLastPage) "Get Started" else "Next",
+                        text = if (isLastPage) stringResource(R.string.onboarding_get_started) else stringResource(R.string.onboarding_next),
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White

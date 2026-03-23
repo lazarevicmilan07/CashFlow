@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App -->
-    <string name="app_name">Money Tracker - Simple Expense Manager</string>
-    <string name="app_name_short">Money Tracker</string>
+    <string name="app_name">CashFlow - Simple Expense Manager</string>
+    <string name="app_name_short">CashFlow</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_transactions">Transactions</string>
@@ -87,7 +87,7 @@
     <string name="section_about">About</string>
     <string name="setting_about">About</string>
     <string name="about_version">Version 3.0.0</string>
-    <string name="about_app_name">Money Tracker - Simple Budget</string>
+    <string name="about_app_name">CashFlow - Simple Budget</string>
     <string name="about_privacy_policy">Privacy Policy</string>
     <string name="about_rate_app">Rate App</string>
 
@@ -153,6 +153,8 @@
     <string name="dashboard_showing_count">Showing %1$d of %2$d transactions</string>
 
     <!-- Transaction Screen -->
+    <string name="transaction_edit_title">Edit Transaction</string>
+    <string name="transaction_new_title">New Transaction</string>
     <string name="transaction_copy_title">Copy Transaction</string>
     <string name="transaction_copy_date_question">Which date should the copy use?</string>
     <string name="transaction_copy_today">Today\'s Date</string>

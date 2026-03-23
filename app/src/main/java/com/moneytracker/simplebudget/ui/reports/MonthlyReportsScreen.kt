@@ -49,10 +49,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.moneytracker.simplebudget.R
 import com.moneytracker.simplebudget.domain.model.CategoryBreakdown
 import com.moneytracker.simplebudget.ui.components.CollapsibleSummaryCard
 import com.moneytracker.simplebudget.ui.components.CurrencyAmountText
@@ -132,7 +134,7 @@ fun MonthlyReportsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Monthly Reports") }
+                title = { Text(stringResource(R.string.monthly_reports_title)) }
             )
         },
         floatingActionButton = {
@@ -217,7 +219,7 @@ fun MonthlyReportsScreen(
                         // Expense Pie Chart
                         if (uiState.expenseBreakdown.isNotEmpty()) {
                             BreakdownCard(
-                                title = "Expenses by Category",
+                                title = stringResource(R.string.reports_expenses_by_category),
                                 breakdown = uiState.expenseBreakdown,
                                 currency = currency,
                                 color = ExpenseRed,
@@ -228,7 +230,7 @@ fun MonthlyReportsScreen(
                         // Income Pie Chart
                         if (uiState.incomeBreakdown.isNotEmpty()) {
                             BreakdownCard(
-                                title = "Income by Category",
+                                title = stringResource(R.string.reports_income_by_category),
                                 breakdown = uiState.incomeBreakdown,
                                 currency = currency,
                                 color = IncomeGreen,
@@ -295,7 +297,7 @@ fun BreakdownCard(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = item.category?.name ?: "Uncategorized",
+                        text = item.category?.name ?: stringResource(R.string.transaction_uncategorized),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.weight(1f)
                     )
@@ -402,7 +404,7 @@ fun PieChart(
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = "${item.category?.name ?: "Uncategorized"}: ",
+                    text = "${item.category?.name ?: stringResource(R.string.transaction_uncategorized)}: ",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = tooltipColor
@@ -441,13 +443,13 @@ fun EmptyReportsState() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "No data for this month",
+                text = stringResource(R.string.reports_no_data_month),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Add transactions to see reports",
+                text = stringResource(R.string.reports_no_data_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )

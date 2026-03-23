@@ -26,18 +26,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.moneytracker.simplebudget.R
 import com.moneytracker.simplebudget.ui.theme.ExpenseRed
 import com.moneytracker.simplebudget.ui.theme.IncomeGreen
 
 @Composable
 fun rememberCollapseProgress(listState: LazyListState): Float {
-    val progress by remember {
+    val progress by remember(listState) {
         derivedStateOf {
             val threshold = 200f
             when {
@@ -154,7 +156,7 @@ fun CollapsibleSummaryCard(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Income",
+                            text = stringResource(R.string.transaction_type_income),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
@@ -203,7 +205,7 @@ fun CollapsibleSummaryCard(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Expenses",
+                            text = stringResource(R.string.transaction_type_expense),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier

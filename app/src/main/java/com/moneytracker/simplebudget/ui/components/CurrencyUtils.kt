@@ -151,7 +151,8 @@ fun CurrencyAmountText(
             style = effectiveStyle,
             color = color,
             maxLines = maxLines,
-            overflow = overflow
+            overflow = overflow,
+            modifier = Modifier.weight(1f, fill = false)
         )
         if (symbolAfter) {
             Spacer(modifier = Modifier.width(1.dp))

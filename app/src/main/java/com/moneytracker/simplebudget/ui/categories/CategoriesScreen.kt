@@ -54,7 +54,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.moneytracker.simplebudget.R
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.moneytracker.simplebudget.domain.model.Category
@@ -150,10 +152,10 @@ fun CategoriesScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is CategoryEvent.CategorySaved -> {
-                    Toast.makeText(context, "Category saved", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.categories_saved), Toast.LENGTH_SHORT).show()
                 }
                 is CategoryEvent.CategoryDeleted -> {
-                    Toast.makeText(context, "Category deleted", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.categories_deleted), Toast.LENGTH_SHORT).show()
                 }
                 is CategoryEvent.ShowPremiumRequired -> {
                     onShowPremium()
@@ -168,7 +170,7 @@ fun CategoriesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Categories") },
+                title = { Text(stringResource(R.string.categories_title)) },
                 navigationIcon = {
                     if (onNavigateBack != null) {
                         IconButton(onClick = onNavigateBack) {
@@ -178,15 +180,15 @@ fun CategoriesScreen(
                 },
                 actions = {
                     TogglePill(
-                        leftLabel = "Expenses",
-                        rightLabel = "Income",
+                        leftLabel = stringResource(R.string.categories_tab_expenses),
+                        rightLabel = stringResource(R.string.categories_tab_income),
                         leftSelected = selectedCategoryType == CategoryType.EXPENSE,
                         onSelect = { isExpense ->
                             viewModel.selectCategoryType(if (isExpense) CategoryType.EXPENSE else CategoryType.INCOME)
                         }
                     )
                     IconButton(onClick = { viewModel.showAddDialog() }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Category")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.categories_add))
                     }
                 }
             )
@@ -263,9 +265,9 @@ fun CategoriesScreen(
     categoryToDelete?.let { category ->
         AlertDialog(
             onDismissRequest = { categoryToDelete = null },
-            title = { Text("Delete Category") },
+            title = { Text(stringResource(R.string.categories_delete_title)) },
             text = {
-                Text("Are you sure you want to delete \"${category.name}\"? Transactions using this category will become uncategorized.")
+                Text(stringResource(R.string.categories_delete_confirm, category.name))
             },
             confirmButton = {
                 TextButton(
@@ -278,12 +280,12 @@ fun CategoriesScreen(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.button_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { categoryToDelete = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.button_cancel))
                 }
             }
         )
@@ -322,7 +324,7 @@ fun CategoryListItem(
             ) {
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.ExpandMore else Icons.Default.ChevronRight,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    contentDescription = if (isExpanded) stringResource(R.string.categories_collapse) else stringResource(R.string.categories_expand),
                     tint = if (hasSubcategories)
                         MaterialTheme.colorScheme.onSurface
                     else
@@ -357,7 +359,7 @@ fun CategoryListItem(
             ) {
                 Icon(
                     Icons.Default.AddCircleOutline,
-                    contentDescription = "Add Subcategory",
+                    contentDescription = stringResource(R.string.categories_add_subcategory),
                     tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
                     modifier = Modifier.size(15.dp)
                 )
@@ -366,7 +368,7 @@ fun CategoryListItem(
             // Drag handle
             Icon(
                 Icons.Default.DragHandle,
-                contentDescription = "Drag to reorder",
+                contentDescription = stringResource(R.string.categories_drag_reorder),
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                 modifier = dragHandleModifier.size(20.dp)
             )
@@ -423,7 +425,7 @@ fun SubcategoryListItem(
             // Drag handle
             Icon(
                 Icons.Default.DragHandle,
-                contentDescription = "Drag to reorder",
+                contentDescription = stringResource(R.string.categories_drag_reorder),
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                 modifier = dragHandleModifier.size(20.dp)
             )
@@ -446,10 +448,10 @@ fun CategoryDialog(
     onDismiss: () -> Unit
 ) {
     val title = when {
-        isEditing && isSubcategory -> "Edit Subcategory"
-        isEditing -> "Edit Category"
-        isSubcategory -> "New Subcategory"
-        else -> "New Category"
+        isEditing && isSubcategory -> stringResource(R.string.categories_edit_subcategory)
+        isEditing -> stringResource(R.string.categories_edit_title)
+        isSubcategory -> stringResource(R.string.categories_new_subcategory)
+        else -> stringResource(R.string.categories_new_title)
     }
 
     AlertDialog(
@@ -476,14 +478,14 @@ fun CategoryDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.label_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
 
                 // Icon Selector
                 Text(
-                    text = "Icon",
+                    text = stringResource(R.string.label_icon),
                     style = MaterialTheme.typography.labelMedium
                 )
                 LazyRow(
@@ -520,7 +522,7 @@ fun CategoryDialog(
 
                 // Color Selector
                 Text(
-                    text = "Color",
+                    text = stringResource(R.string.label_color),
                     style = MaterialTheme.typography.labelMedium
                 )
                 LazyRow(
@@ -561,7 +563,7 @@ fun CategoryDialog(
                 onClick = onSave,
                 enabled = name.isNotBlank()
             ) {
-                Text("Save")
+                Text(stringResource(R.string.button_save))
             }
         },
         dismissButton = {
@@ -573,12 +575,12 @@ fun CategoryDialog(
                             contentColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Delete")
+                        Text(stringResource(R.string.button_delete))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.button_cancel))
                 }
             }
         }

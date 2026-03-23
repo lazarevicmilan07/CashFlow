@@ -38,9 +38,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.moneytracker.simplebudget.R
 import com.moneytracker.simplebudget.ui.components.CollapsibleSummaryCard
 import com.moneytracker.simplebudget.ui.components.MonthSelector
 import com.moneytracker.simplebudget.ui.components.MonthYearPickerDialog
@@ -71,9 +73,9 @@ fun StatsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Stats") },
+                title = { Text(stringResource(R.string.stats_title)) },
                 actions = {
-                    TogglePill(leftLabel = "Monthly", rightLabel = "Yearly", leftSelected = isMonthly, onSelect = { isMonthly = it })
+                    TogglePill(leftLabel = stringResource(R.string.reports_tab_monthly), rightLabel = stringResource(R.string.reports_tab_yearly), leftSelected = isMonthly, onSelect = { isMonthly = it })
                     Spacer(modifier = Modifier.width(8.dp))
                 }
             )
@@ -228,7 +230,7 @@ private fun MonthlyStatsContent(
                 ) {
                     if (uiState.expenseBreakdown.isNotEmpty()) {
                         BreakdownCard(
-                            title = "Expenses by Category",
+                            title = stringResource(R.string.reports_expenses_by_category),
                             breakdown = uiState.expenseBreakdown,
                             currency = currency,
                             color = ExpenseRed,
@@ -237,7 +239,7 @@ private fun MonthlyStatsContent(
                     }
                     if (uiState.incomeBreakdown.isNotEmpty()) {
                         BreakdownCard(
-                            title = "Income by Category",
+                            title = stringResource(R.string.reports_income_by_category),
                             breakdown = uiState.incomeBreakdown,
                             currency = currency,
                             color = IncomeGreen,
@@ -332,7 +334,7 @@ private fun YearlyStatsContent(
             currency = currency,
             collapseProgress = collapseProgress,
             symbolAfter = symbolAfter,
-            balanceLabel = "Yearly Balance",
+            balanceLabel = stringResource(R.string.reports_yearly_balance),
             modifier = Modifier.offset { IntOffset(dragOffset.value.roundToInt(), 0) }
         )
 
@@ -376,7 +378,7 @@ private fun YearlyStatsContent(
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = "Monthly Overview",
+                                    text = stringResource(R.string.reports_monthly_overview),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -392,7 +394,7 @@ private fun YearlyStatsContent(
                     }
                     if (uiState.expenseBreakdown.isNotEmpty()) {
                         BreakdownCard(
-                            title = "Yearly Expenses by Category",
+                            title = stringResource(R.string.reports_yearly_expenses_by_category),
                             breakdown = uiState.expenseBreakdown,
                             currency = currency,
                             color = ExpenseRed,
@@ -401,7 +403,7 @@ private fun YearlyStatsContent(
                     }
                     if (uiState.incomeBreakdown.isNotEmpty()) {
                         BreakdownCard(
-                            title = "Yearly Income by Category",
+                            title = stringResource(R.string.reports_yearly_income_by_category),
                             breakdown = uiState.incomeBreakdown,
                             currency = currency,
                             color = IncomeGreen,

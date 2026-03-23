@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App -->
-    <string name="app_name">Money Tracker - Простой учёт расходов</string>
-    <string name="app_name_short">Money Tracker</string>
+    <string name="app_name">CashFlow - Простой учёт расходов</string>
+    <string name="app_name_short">CashFlow</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_transactions">Транзакции</string>
@@ -87,7 +87,7 @@
     <string name="section_about">О приложении</string>
     <string name="setting_about">О приложении</string>
     <string name="about_version">Версия 3.0.0</string>
-    <string name="about_app_name">Money Tracker - Простой бюджет</string>
+    <string name="about_app_name">CashFlow - Простой бюджет</string>
     <string name="about_privacy_policy">Политика конфиденциальности</string>
     <string name="about_rate_app">Оценить приложение</string>
 
@@ -153,6 +153,8 @@
     <string name="dashboard_showing_count">Показано %1$d из %2$d транзакций</string>
 
     <!-- Transaction Screen -->
+    <string name="transaction_edit_title">Редактировать транзакцию</string>
+    <string name="transaction_new_title">Новая транзакция</string>
     <string name="transaction_copy_title">Копировать транзакцию</string>
     <string name="transaction_copy_date_question">Какую дату использовать для копии?</string>
     <string name="transaction_copy_today">Сегодняшняя дата</string>

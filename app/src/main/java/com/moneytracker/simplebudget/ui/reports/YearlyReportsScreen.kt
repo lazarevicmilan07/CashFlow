@@ -55,10 +55,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.moneytracker.simplebudget.R
 import com.moneytracker.simplebudget.ui.components.CollapsibleSummaryCard
 import com.moneytracker.simplebudget.ui.components.CurrencyAmountText
 import com.moneytracker.simplebudget.ui.components.MonthlyBarChart
@@ -140,7 +142,7 @@ fun YearlyReportsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Yearly Reports") }
+                title = { Text(stringResource(R.string.yearly_reports_title)) }
             )
         },
         floatingActionButton = {
@@ -176,7 +178,7 @@ fun YearlyReportsScreen(
                 currency = currency,
                 collapseProgress = collapseProgress,
                 symbolAfter = symbolAfter,
-                balanceLabel = "Yearly Balance",
+                balanceLabel = stringResource(R.string.reports_yearly_balance),
                 modifier = Modifier.offset { IntOffset(dragOffset.value.roundToInt(), 0) }
             )
 
@@ -228,7 +230,7 @@ fun YearlyReportsScreen(
                             Card(modifier = Modifier.fillMaxWidth()) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     Text(
-                                        text = "Monthly Overview",
+                                        text = stringResource(R.string.reports_monthly_overview),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -246,7 +248,7 @@ fun YearlyReportsScreen(
                         // Expense Pie Chart
                         if (uiState.expenseBreakdown.isNotEmpty()) {
                             BreakdownCard(
-                                title = "Yearly Expenses by Category",
+                                title = stringResource(R.string.reports_yearly_expenses_by_category),
                                 breakdown = uiState.expenseBreakdown,
                                 currency = currency,
                                 color = ExpenseRed,
@@ -257,7 +259,7 @@ fun YearlyReportsScreen(
                         // Income Pie Chart
                         if (uiState.incomeBreakdown.isNotEmpty()) {
                             BreakdownCard(
-                                title = "Yearly Income by Category",
+                                title = stringResource(R.string.reports_yearly_income_by_category),
                                 breakdown = uiState.incomeBreakdown,
                                 currency = currency,
                                 color = IncomeGreen,
@@ -329,7 +331,7 @@ fun YearPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Year", style = MaterialTheme.typography.titleMedium) },
+        title = { Text(stringResource(R.string.period_select_year), style = MaterialTheme.typography.titleMedium) },
         text = {
             Column {
                 val years = (currentYear - 10)..(currentYear + 5)
@@ -371,12 +373,12 @@ fun YearPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = { onYearSelected(pickedYear) }) {
-                Text("OK")
+                Text(stringResource(R.string.button_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.button_cancel))
             }
         }
     )
@@ -393,7 +395,7 @@ fun MonthlyBreakdownCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Monthly Breakdown",
+                text = stringResource(R.string.reports_monthly_breakdown),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -402,7 +404,8 @@ fun MonthlyBreakdownCard(
 
             monthlyData.forEachIndexed { index, data ->
                 if (data.income > 0 || data.expense > 0) {
-                    val monthName = Month.of(index + 1).getDisplayName(TextStyle.SHORT, Locale.ENGLISH)
+                    val monthName = Month.of(index + 1).getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                        .replaceFirstChar { it.titlecase(Locale.getDefault()) }
                     val balance = data.income - data.expense
                     val incomeFraction = if (maxAmount > 0) (data.income / maxAmount).toFloat() else 0f
                     val expenseFraction = if (maxAmount > 0) (data.expense / maxAmount).toFloat() else 0f
@@ -534,13 +537,13 @@ fun EmptyYearlyReportsState() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "No data for this year",
+                text = stringResource(R.string.reports_no_data_year),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Add transactions to see yearly reports",
+                text = stringResource(R.string.reports_no_data_year_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )

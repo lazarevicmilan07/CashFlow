@@ -113,6 +113,9 @@ dependencies {
     // Google Play Billing
     implementation("com.android.billingclient:billing-ktx:7.1.1")
 
+    // Google Play In-App Update
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
+
     // Google AdMob
     implementation("com.google.android.gms:play-services-ads:22.6.0")
 
