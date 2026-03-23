@@ -92,7 +92,9 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
@@ -150,6 +152,13 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var appUpdateManager: AppUpdateManager
 
+    // Called when a FLEXIBLE update finishes downloading — triggers the system restart dialog.
+    private val installStateListener = InstallStateUpdatedListener { state ->
+        if (state.installStatus() == InstallStatus.DOWNLOADED) {
+            appUpdateManager.completeUpdate()
+        }
+    }
+
     override fun attachBaseContext(newBase: Context) {
         val lang = LanguagePreferences.getLanguage(newBase)
         super.attachBaseContext(LocaleHelper.wrapContext(newBase, lang))
@@ -183,18 +192,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        appUpdateManager.unregisterListener(installStateListener)
+    }
+
     private fun checkForAppUpdate() {
         appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-            if (
-                appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
-                appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
-            ) {
-                appUpdateManager.startUpdateFlowForResult(
-                    appUpdateInfo,
-                    this,
-                    AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build(),
-                    0
-                )
+            if (appUpdateInfo.updateAvailability() != UpdateAvailability.UPDATE_AVAILABLE) return@addOnSuccessListener
+            when {
+                appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE) ->
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo, this,
+                        AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build(), 0
+                    )
+                appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE) ->
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo, this,
+                        AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build(), 0
+                    )
             }
         }
     }
@@ -272,6 +288,7 @@ class MainActivity : ComponentActivity() {
         }
 
         appUpdateManager = AppUpdateManagerFactory.create(this)
+        appUpdateManager.registerListener(installStateListener)
         checkForAppUpdate()
 
         // Initialize Google Mobile Ads SDK
