@@ -86,7 +86,7 @@
     <!-- Settings — About -->
     <string name="section_about">Über</string>
     <string name="setting_about">Über die App</string>
-    <string name="about_version">Version 3.0.0</string>
+    <string name="about_version">Version</string>
     <string name="about_app_name">CashFlow - Einfaches Budget</string>
     <string name="about_privacy_policy">Datenschutzrichtlinie</string>
     <string name="about_rate_app">App bewerten</string>

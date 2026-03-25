@@ -86,7 +86,7 @@
     <!-- Settings — About -->
     <string name="section_about">O aplikaciji</string>
     <string name="setting_about">O aplikaciji</string>
-    <string name="about_version">Verzija 3.0.0</string>
+    <string name="about_version">Verzija</string>
     <string name="about_app_name">CashFlow - Jednostavan budžet</string>
     <string name="about_privacy_policy">Politika privatnosti</string>
     <string name="about_rate_app">Oceni aplikaciju</string>

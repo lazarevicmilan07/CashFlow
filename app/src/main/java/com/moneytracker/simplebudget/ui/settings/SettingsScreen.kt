@@ -628,7 +628,7 @@ fun SettingsScreen(
                     SettingsItem(
                         icon = Icons.Default.Info,
                         title = stringResource(R.string.setting_about),
-                        subtitle = stringResource(R.string.about_version),
+                        subtitle = "${stringResource(R.string.about_version)} ${com.moneytracker.simplebudget.BuildConfig.VERSION_NAME}",
                         onClick = { showAboutDialog = true }
                     )
                 }
@@ -723,7 +723,7 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.about_version),
+                        text = "${stringResource(R.string.about_version)} ${com.moneytracker.simplebudget.BuildConfig.VERSION_NAME}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(4.dp))
