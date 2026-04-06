@@ -59,6 +59,7 @@ class BillingManager @Inject constructor(
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     reconnectAttempts = 0
                     queryProductDetails()
+                    queryExistingPurchases()
                 }
             }
 
@@ -71,6 +72,18 @@ class BillingManager @Inject constructor(
                 }
             }
         })
+    }
+
+    private fun queryExistingPurchases() {
+        billingClient?.queryPurchasesAsync(
+            QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+        ) { billingResult, purchases ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                purchases.forEach { purchase -> handlePurchase(purchase) }
+            }
+        }
     }
 
     private fun queryProductDetails() {

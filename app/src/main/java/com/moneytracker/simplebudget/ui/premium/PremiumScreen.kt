@@ -102,13 +102,13 @@ fun PremiumScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp, vertical = 8.dp),
+                .padding(horizontal = 24.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Premium Icon
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(
@@ -123,12 +123,12 @@ fun PremiumScreen(
                 Icon(
                     Icons.Default.Star,
                     contentDescription = null,
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(24.dp),
                     tint = Color.White
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Unlock Premium",
@@ -136,7 +136,7 @@ fun PremiumScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = "One-time purchase, lifetime access",
@@ -144,7 +144,7 @@ fun PremiumScreen(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Features
             Card(
@@ -154,8 +154,8 @@ fun PremiumScreen(
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     PremiumFeatureItem(
                         icon = Icons.Default.CloudSync,
@@ -196,7 +196,7 @@ fun PremiumScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Price
             if (uiState.price != null) {
@@ -207,7 +207,7 @@ fun PremiumScreen(
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -235,14 +235,14 @@ fun PremiumScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Purchase Button
             Button(
                 onClick = { (context as? Activity)?.let { viewModel.purchasePremium(it) } },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .height(48.dp),
                 shape = RoundedCornerShape(16.dp),
                 enabled = !uiState.isLoading && uiState.price != null
             ) {
@@ -260,14 +260,12 @@ fun PremiumScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Restore Purchases
+            // Restore Purchases + security note
             TextButton(onClick = { viewModel.restorePurchases() }) {
                 Text("Restore Purchases")
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Secure payment via Google Play",
@@ -292,7 +290,7 @@ fun PremiumFeatureItem(
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(32.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = if (comingSoon) 0.05f else 0.1f)),
             contentAlignment = Alignment.Center
@@ -301,10 +299,10 @@ fun PremiumFeatureItem(
                 icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = contentAlpha),
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(16.dp)
             )
         }
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,

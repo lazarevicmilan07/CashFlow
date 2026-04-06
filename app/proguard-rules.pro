@@ -23,9 +23,15 @@
 -keep class com.itextpdf.** { *; }
 -dontwarn com.itextpdf.**
 
-# FastExcel
--keep class org.dhatim.fastexcel.** { *; }
--dontwarn org.dhatim.fastexcel.**
+# Apache POI OOXML
+-keep class org.apache.poi.** { *; }
+-dontwarn org.apache.poi.**
+-keep class org.apache.xmlbeans.** { *; }
+-dontwarn org.apache.xmlbeans.**
+-dontwarn com.fasterxml.aalto.**
+-dontwarn java.awt.**
+-dontwarn org.apache.logging.**
+-dontwarn org.apache.log4j.**
 
 # Google Play Billing
 -keep class com.android.vending.billing.**

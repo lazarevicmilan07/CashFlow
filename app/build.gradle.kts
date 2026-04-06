@@ -15,8 +15,8 @@ android {
         applicationId = "com.moneytracker.simplebudget"
         minSdk = 26
         targetSdk = 35
-        versionCode = 11
-        versionName = "3.2.2"
+        versionCode = 14
+        versionName = "3.2.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -72,6 +72,12 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/NOTICE.md"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "mozilla/public-suffix-list.txt"
         }
     }
 }
@@ -133,8 +139,8 @@ dependencies {
     // PDF Generation
     implementation("com.itextpdf:itext7-core:7.2.5")
 
-    // Excel Export (lightweight library for Android)
-    implementation("org.dhatim:fastexcel:0.15.7")
+    // Excel Export
+    implementation("org.apache.poi:poi-ooxml:5.2.3")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

@@ -96,6 +96,7 @@ import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
+import androidx.activity.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
 import javax.inject.Inject
@@ -147,6 +148,8 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var preferencesManager: PreferencesManager
+
+    private val mainViewModel: MainViewModel by viewModels()
 
     private val openSettings = mutableStateOf(false)
 
@@ -290,6 +293,10 @@ class MainActivity : ComponentActivity() {
         appUpdateManager = AppUpdateManagerFactory.create(this)
         appUpdateManager.registerListener(installStateListener)
         checkForAppUpdate()
+
+        // Reading the property here triggers the lazy delegate, creating MainViewModel
+        // immediately so the billing auto-restore check runs on every app launch.
+        mainViewModel
 
         // Initialize Google Mobile Ads SDK
         MobileAds.initialize(this) {}
