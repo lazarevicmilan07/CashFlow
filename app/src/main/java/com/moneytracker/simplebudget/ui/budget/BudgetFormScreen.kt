@@ -81,6 +81,7 @@ import kotlin.math.roundToInt
 @Composable
 fun BudgetFormScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToCategories: (() -> Unit)? = null,
     viewModel: BudgetFormViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -357,7 +358,7 @@ fun BudgetFormScreen(
                                     viewModel.setCurrentField(BudgetFormField.SCOPE)
                                 },
                                 onClose = { viewModel.setCurrentField(BudgetFormField.NONE) },
-                                onEditCategories = null,
+                                onEditCategories = onNavigateToCategories,
                                 onOverallSelected = {
                                     isOverallBudget = true
                                     selectedParentCategoryId = null

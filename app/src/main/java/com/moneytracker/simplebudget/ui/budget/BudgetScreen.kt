@@ -5,13 +5,16 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,7 +61,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -75,10 +77,7 @@ import com.moneytracker.simplebudget.ui.components.formatCurrency
 import com.moneytracker.simplebudget.ui.theme.ExpenseRed
 import com.moneytracker.simplebudget.ui.theme.IncomeGreen
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.math.roundToInt
 
 private val BudgetAmber = Color(0xFFFFA726)
@@ -102,12 +101,6 @@ fun BudgetScreen(
     var showMonthPicker by remember { mutableStateOf(false) }
     var showYearPicker by remember { mutableStateOf(false) }
     var showPremiumLimitDialog by remember { mutableStateOf(false) }
-
-    val today = LocalDate.now()
-    val currentYearMonth = YearMonth.now()
-    val isCurrentMonth = selectedMonth == currentYearMonth
-    val daysLeftInMonth = if (isCurrentMonth) today.lengthOfMonth() - today.dayOfMonth + 1 else 0
-    val monthsLeftInYear = if (isCurrentMonth) 12 - today.monthValue + 1 else 0
 
     val swipeThreshold = 100f
     val dragOffset = remember { Animatable(0f) }
@@ -262,16 +255,10 @@ fun BudgetScreen(
                                 symbolAfter = symbolAfter
                             )
                             budgets.forEach { budgetProgress ->
-                                val daysLeft = when (budgetProgress.budget.period) {
-                                    BudgetPeriod.MONTHLY -> daysLeftInMonth
-                                    BudgetPeriod.YEARLY -> monthsLeftInYear * 30
-                                }
                                 BudgetCard(
                                     budgetWithProgress = budgetProgress,
                                     currency = currency,
                                     symbolAfter = symbolAfter,
-                                    daysLeft = daysLeft,
-                                    isCurrentPeriod = isCurrentMonth,
                                     onClick = {
                                         onNavigateToForm(
                                             budgetProgress.budget.id,
@@ -363,6 +350,9 @@ private fun BudgetSummaryCard(
         label = "summary_ring"
     )
     val ringColor = budgetColor(percentage)
+    val gradientBrush = Brush.verticalGradient(
+        colors = listOf(ringColor.copy(alpha = 0.08f), Color.Transparent)
+    )
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -371,77 +361,93 @@ private fun BudgetSummaryCard(
         tonalElevation = 1.dp,
         shadowElevation = 2.dp
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .background(gradientBrush)
         ) {
-            Box(
-                modifier = Modifier.size(72.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                val trackColor = MaterialTheme.colorScheme.surfaceVariant
-                Canvas(modifier = Modifier.size(72.dp)) {
-                    val strokeWidth = 8.dp.toPx()
-                    val inset = strokeWidth / 2f
-                    val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
-                    drawArc(
-                        color = trackColor,
-                        startAngle = -90f,
-                        sweepAngle = 360f,
-                        useCenter = false,
-                        topLeft = Offset(inset, inset),
-                        size = arcSize,
-                        style = Stroke(strokeWidth, cap = StrokeCap.Round)
-                    )
-                    drawArc(
-                        color = ringColor,
-                        startAngle = -90f,
-                        sweepAngle = 360f * animatedPercentage,
-                        useCenter = false,
-                        topLeft = Offset(inset, inset),
-                        size = arcSize,
-                        style = Stroke(strokeWidth, cap = StrokeCap.Round)
-                    )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier.size(88.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        Canvas(modifier = Modifier.size(88.dp)) {
+                            val strokeWidth = 10.dp.toPx()
+                            val inset = strokeWidth / 2f
+                            val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
+                            drawArc(
+                                color = trackColor,
+                                startAngle = -90f,
+                                sweepAngle = 360f,
+                                useCenter = false,
+                                topLeft = Offset(inset, inset),
+                                size = arcSize,
+                                style = Stroke(strokeWidth, cap = StrokeCap.Round)
+                            )
+                            drawArc(
+                                color = ringColor,
+                                startAngle = -90f,
+                                sweepAngle = 360f * animatedPercentage,
+                                useCenter = false,
+                                topLeft = Offset(inset, inset),
+                                size = arcSize,
+                                style = Stroke(strokeWidth, cap = StrokeCap.Round)
+                            )
+                        }
+                        Text(
+                            text = "${(percentage * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = ringColor
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = stringResource(R.string.budget_total_budget),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = formatCurrency(totalSpent, currency, symbolAfter),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "${stringResource(R.string.budget_of)} ${formatCurrency(totalBudget, currency, symbolAfter)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        val remaining = totalBudget - totalSpent
+                        val isOver = remaining < 0
+                        Text(
+                            text = if (isOver) "${formatCurrency(-remaining, currency, symbolAfter)} ${stringResource(R.string.budget_hint_over)}"
+                                   else "${formatCurrency(remaining, currency, symbolAfter)} ${stringResource(R.string.budget_remaining)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isOver) ExpenseRed else IncomeGreen,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
-                Text(
-                    text = "${(percentage * 100).toInt()}%",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = ringColor
-                )
-            }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column {
-                Text(
-                    text = stringResource(R.string.budget_total_budget),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = formatCurrency(totalSpent, currency, symbolAfter),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "${stringResource(R.string.budget_of)} ${formatCurrency(totalBudget, currency, symbolAfter)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                val remaining = totalBudget - totalSpent
-                val isOver = remaining < 0
-                Text(
-                    text = if (isOver) "${formatCurrency(-remaining, currency, symbolAfter)} ${stringResource(R.string.budget_hint_over)}"
-                           else "${formatCurrency(remaining, currency, symbolAfter)} ${stringResource(R.string.budget_remaining)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isOver) ExpenseRed else IncomeGreen,
-                    fontWeight = FontWeight.Medium
+                BudgetProgressBar(
+                    progress = percentage,
+                    color = ringColor,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
                 )
             }
         }
@@ -453,19 +459,18 @@ fun BudgetCard(
     budgetWithProgress: BudgetWithProgress,
     currency: String,
     symbolAfter: Boolean,
-    daysLeft: Int,
-    isCurrentPeriod: Boolean,
     onClick: () -> Unit
 ) {
     val percentage = budgetWithProgress.percentage.coerceIn(0f, Float.MAX_VALUE)
     val displayPercentage = percentage.coerceIn(0f, 1f)
     val progressColor = budgetColor(percentage)
     val isOverBudget = budgetWithProgress.remaining < 0
+    val percentInt = (displayPercentage * 100).toInt()
 
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val cardTint = when {
-        isOverBudget -> if (isDark) Color(0xFF2A1515) else BudgetRedLight
-        percentage >= 0.7f -> if (isDark) Color(0xFF2A1F0D) else BudgetAmberLight
+        isOverBudget || percentage >= 0.9f -> if (isDark) Color(0xFF2A1515) else BudgetRedLight
+        percentage >= 0.65f -> if (isDark) Color(0xFF2A1F0D) else BudgetAmberLight
         else -> MaterialTheme.colorScheme.surface
     }
 
@@ -488,51 +493,77 @@ fun BudgetCard(
         tonalElevation = if (cardTint == MaterialTheme.colorScheme.surface) 1.dp else 0.dp,
         shadowElevation = 1.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(progressColor)
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, end = 16.dp, top = 14.dp, bottom = 12.dp)
             ) {
-                if (iconCategory != null) {
-                    CategoryIcon(
-                        icon = iconCategory.icon,
-                        color = iconCategory.color,
-                        size = 40.dp,
-                        iconSize = 22.dp
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (iconCategory != null) {
+                        CategoryIcon(
+                            icon = iconCategory.icon,
+                            color = iconCategory.color,
+                            size = 44.dp,
+                            iconSize = 24.dp
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = displayName,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = when (budgetWithProgress.budget.period) {
-                            BudgetPeriod.MONTHLY -> {
-                                val m = budgetWithProgress.budget.month
-                                if (m != null)
-                                    YearMonth.of(budgetWithProgress.budget.year, m)
-                                        .format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.getDefault()))
-                                        .replaceFirstChar { it.titlecase(Locale.getDefault()) }
-                                else budgetWithProgress.budget.year.toString()
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = displayName,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(progressColor.copy(alpha = 0.12f))
+                                    .padding(horizontal = 7.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "$percentInt%",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = progressColor
+                                )
                             }
-                            BudgetPeriod.YEARLY -> budgetWithProgress.budget.year.toString()
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        }
+                    }
                 }
 
-                Column(horizontalAlignment = Alignment.End) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                BudgetProgressBar(
+                    progress = displayPercentage,
+                    color = progressColor,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
                     Text(
                         text = formatCurrency(budgetWithProgress.spent, currency, symbolAfter),
                         style = MaterialTheme.typography.bodyMedium,
@@ -540,50 +571,23 @@ fun BudgetCard(
                         color = if (isOverBudget) ExpenseRed else MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "${stringResource(R.string.budget_of)} ${formatCurrency(budgetWithProgress.budget.amount, currency, symbolAfter)}",
-                        style = MaterialTheme.typography.labelSmall,
+                        text = "/ ${formatCurrency(budgetWithProgress.budget.amount, currency, symbolAfter)}",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(2.dp))
 
-            BudgetProgressBar(
-                progress = displayPercentage,
-                color = progressColor,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
                 Text(
-                    text = if (isOverBudget) {
+                    text = if (isOverBudget)
                         "${formatCurrency(-budgetWithProgress.remaining, currency, symbolAfter)} ${stringResource(R.string.budget_hint_over)}"
-                    } else {
-                        "${formatCurrency(budgetWithProgress.remaining, currency, symbolAfter)} ${stringResource(R.string.budget_remaining)}"
-                    },
+                    else
+                        "${formatCurrency(budgetWithProgress.remaining, currency, symbolAfter)} ${stringResource(R.string.budget_remaining)}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (isOverBudget) ExpenseRed else MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = if (isOverBudget) FontWeight.SemiBold else FontWeight.Normal
+                    fontWeight = if (isOverBudget) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (isOverBudget) ExpenseRed else IncomeGreen
                 )
-
-                if (isCurrentPeriod && daysLeft > 0) {
-                    Text(
-                        text = when (budgetWithProgress.budget.period) {
-                            BudgetPeriod.MONTHLY -> "$daysLeft days left"
-                            BudgetPeriod.YEARLY -> "${daysLeft / 30} months left"
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
         }
     }
@@ -672,7 +676,7 @@ private fun BudgetProgressBar(
 
 private fun budgetColor(percentage: Float): Color = when {
     percentage >= 0.9f -> ExpenseRed
-    percentage >= 0.7f -> BudgetAmber
+    percentage >= 0.65f -> BudgetAmber
     else -> IncomeGreen
 }
 

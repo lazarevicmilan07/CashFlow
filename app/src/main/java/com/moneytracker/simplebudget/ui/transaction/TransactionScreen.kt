@@ -188,8 +188,8 @@ fun TransactionScreen(
                     else
                         context.getString(R.string.budget_toast_left, formatCurrency(event.remaining, currency, symbolAfter))
                     val bgColor = when {
-                        event.isOver -> 0xFFB71C1C.toInt()
-                        event.percentage >= 0.7f -> 0xFFE65100.toInt()
+                        event.isOver || event.percentage >= 0.9f -> 0xFFB71C1C.toInt()
+                        event.percentage >= 0.65f -> 0xFFE65100.toInt()
                         else -> 0xFF1B5E20.toInt()
                     }
                     val rootView = (context as? Activity)
@@ -771,19 +771,6 @@ fun BottomSelectionPanel(
         tonalElevation = 2.dp
     ) {
         Column {
-            // Drag handle
-            Box(
-                modifier = Modifier
-                    .padding(top = 6.dp, bottom = 2.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .width(32.dp)
-                    .height(3.dp)
-                    .background(
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                        RoundedCornerShape(2.dp)
-                    )
-            )
-
             when (uiState.currentField) {
                 TransactionField.ACCOUNT -> {
                     AccountSelectionPanel(
@@ -1263,9 +1250,9 @@ private fun BudgetHintRow(
     AnimatedVisibility(visible = budgetHint != null) {
         val hint = budgetHint ?: return@AnimatedVisibility
         val isOver = hint.remaining < 0
-        val isWarning = !isOver && hint.percentage >= 0.7f
+        val isWarning = !isOver && hint.percentage >= 0.65f
         val hintColor = when {
-            isOver -> ExpenseRed
+            isOver || hint.percentage >= 0.9f -> ExpenseRed
             isWarning -> Color(0xFFFFA726)
             else -> IncomeGreen
         }
@@ -1282,7 +1269,7 @@ private fun BudgetHintRow(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val icon = when {
-                    isOver -> "⚠️"
+                    isOver || hint.percentage >= 0.9f -> "⚠️"
                     isWarning -> "⚡"
                     else -> "✓"
                 }
